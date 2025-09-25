@@ -35,19 +35,20 @@ describe('rateLimit middleware', () => {
   });
 
   it('resets after windowMs', async () => {
-    const mw = rateLimit({ limit: 1, windowMs: 10, key: () => String(Date.now()) });
+    let keyValue = 'fixed';
+    const mw = rateLimit({ limit: 1, windowMs: 10, key: () => keyValue });
     const ctx: any = createCtx();
     const next = async () => {};
-    await mw(ctx, next);
-    await mw(ctx, next);
+    await mw(ctx, next); // first request, allowed
+    await mw(ctx, next); // second request, should be blocked
     expect(ctx.res).toBeDefined();
     expect(ctx.res.status).toBe(429);
     // Wait for window to reset
     await new Promise((res) => setTimeout(res, 15));
     ctx.res = undefined;
-    // Use a new key to simulate a new window
-    ctx.req = new Request('https://api.test', { headers: { 'X-Unique': String(Date.now()) } });
-    await mw(ctx, next);
+    keyValue = 'new'; // simulate a new window
+    ctx.req = new Request('https://api.test', { headers: { 'X-Unique': keyValue } });
+    await mw(ctx, next); // should be allowed again
     expect(ctx.res).toBeUndefined();
   });
 
