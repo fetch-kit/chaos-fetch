@@ -1,5 +1,13 @@
 # chaos-fetch
 
+## 0.3.0
+
+### Minor Changes
+
+- 15ad76d: Changed
+  - prepublish script fixed
+  - publish script deleted
+
 ## 0.2.2
 
 ### Patch Changes
