@@ -1,6 +1,6 @@
 {
   "name": "@fetchkit/chaos-fetch",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "description": "Client-side chaos-testing library for JavaScript/TypeScript apps.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,7 +18,6 @@
     "format": "prettier --write .",
     "changeset": "changeset",
     "version": "changeset version",
-    "publish": "changeset publish",
     "prepublishOnly": "npm run build && npm run test:ci"
   },
   "files": [
