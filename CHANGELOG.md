@@ -1,5 +1,15 @@
 # chaos-fetch
 
+## 0.2.4
+
+### Patch Changes
+
+- 549aef0: Changed
+  - version bump
+
+- 549aef0: Changed
+  - version bump
+
 ## 0.2.3
 
 ### Patch Changes
