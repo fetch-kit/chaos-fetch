@@ -19,7 +19,7 @@
     "changeset": "changeset",
     "version": "changeset version",
     "publish": "changeset publish",
-    "prepublishOnly": "npm run build && npm run test"
+    "prepublishOnly": "npm run build && npm run test:ci"
   },
   "files": [
     "dist"
