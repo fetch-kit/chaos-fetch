@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 0.3.1
+
+### Patch Changes
+
+- 458dc8b: Fixed
+  - rateLimit test
+
 ## 0.3.0
 
 ### Minor Changes
