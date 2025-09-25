@@ -1,4 +1,3 @@
-
 import { rateLimit } from '../../src/middlewares/rateLimit';
 import { describe, it, expect } from 'vitest';
 
@@ -15,7 +14,9 @@ describe('rateLimit middleware', () => {
     const mw = rateLimit({ limit: 2, windowMs: 1000 });
     const ctx: any = createCtx();
     let called = 0;
-    const next = async () => { called++; };
+    const next = async () => {
+      called++;
+    };
     await mw(ctx, next);
     expect(ctx.res).toBeUndefined();
     await mw(ctx, next);
@@ -39,9 +40,10 @@ describe('rateLimit middleware', () => {
     const next = async () => {};
     await mw(ctx, next);
     await mw(ctx, next);
+    expect(ctx.res).toBeDefined();
     expect(ctx.res.status).toBe(429);
     // Wait for window to reset
-    await new Promise(res => setTimeout(res, 15));
+    await new Promise((res) => setTimeout(res, 15));
     ctx.res = undefined;
     // Use a new key to simulate a new window
     ctx.req = new Request('https://api.test', { headers: { 'X-Unique': String(Date.now()) } });
@@ -50,7 +52,11 @@ describe('rateLimit middleware', () => {
   });
 
   it('uses custom key function', async () => {
-    const mw = rateLimit({ limit: 1, windowMs: 1000, key: (req) => req.headers.get('X-User') || 'anon' });
+    const mw = rateLimit({
+      limit: 1,
+      windowMs: 1000,
+      key: (req) => req.headers.get('X-User') || 'anon',
+    });
     const ctxA: any = createCtx({ 'X-User': 'A' });
     const ctxB: any = createCtx({ 'X-User': 'B' });
     const next = async () => {};
@@ -62,16 +68,16 @@ describe('rateLimit middleware', () => {
   });
 
   it('uses header key string', async () => {
-  const mwA = rateLimit({ limit: 1, windowMs: 1000, key: 'X-User' });
-  const mwB = rateLimit({ limit: 1, windowMs: 1000, key: 'X-User' });
-  const ctxA: any = createCtx({ 'X-User': 'A' });
-  // Use a unique key for ctxB to avoid cache interference
-  const ctxB: any = createCtx({ 'X-User': 'B-' + Date.now() });
-  const next = async () => {};
-  await mwA(ctxA, next);
-  await mwA(ctxA, next);
-  expect(ctxA.res.status).toBe(429);
-  await mwB(ctxB, next);
-  expect(ctxB.res).toBeUndefined();
+    const mwA = rateLimit({ limit: 1, windowMs: 1000, key: 'X-User' });
+    const mwB = rateLimit({ limit: 1, windowMs: 1000, key: 'X-User' });
+    const ctxA: any = createCtx({ 'X-User': 'A' });
+    // Use a unique key for ctxB to avoid cache interference
+    const ctxB: any = createCtx({ 'X-User': 'B-' + Date.now() });
+    const next = async () => {};
+    await mwA(ctxA, next);
+    await mwA(ctxA, next);
+    expect(ctxA.res.status).toBe(429);
+    await mwB(ctxB, next);
+    expect(ctxB.res).toBeUndefined();
   });
 });
