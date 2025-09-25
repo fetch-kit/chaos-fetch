@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 0.2.5
+
+### Patch Changes
+
+- 6b7cb47: Changed
+  - prepublish script fixed
+
 ## 0.2.4
 
 ### Patch Changes
