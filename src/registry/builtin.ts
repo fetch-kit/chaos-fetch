@@ -5,6 +5,7 @@ import { failRandomly } from '../middlewares/failRandomly';
 import { failNth } from '../middlewares/failNth';
 import { fail } from '../middlewares/fail';
 import { rateLimit, RateLimitOptions } from '../middlewares/rateLimit';
+import { throttle, ThrottleOptions } from '../middlewares/throttle';
 
 export function registerBuiltins() {
   // Register built-in middleware primitives
@@ -20,4 +21,5 @@ export function registerBuiltins() {
   );
   registerMiddleware('fail', (opts) => fail(opts as { status?: number; body?: string }));
   registerMiddleware('rateLimit', (opts) => rateLimit(opts as unknown as RateLimitOptions));
+  registerMiddleware('throttle', (opts) => throttle(opts as unknown as ThrottleOptions));
 }

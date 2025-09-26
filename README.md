@@ -83,6 +83,7 @@ Chaos Proxy uses Koa Router for path matching, supporting named parameters (e.g.
 - `failRandomly({ rate, status, body })` — fail with probability sending `status` and `body`
 - `failNth({ n, status, body })` — fail every nth request with `status` and `body`
 - `rateLimit({ limit, windowMs, key })` — rate limit to `limit` requests per `windowMs` milliseconds for each unique `key` (e.g., header, user, IP). Responds with 429 if limit exceeded
+- `throttle({ rate, chunkSize, key })` — limit response bandwidth to `rate` bytes per second, chunking responses by `chunkSize` bytes, for each unique `key` (e.g., header, user, IP).
 
 ### Rate Limiting
 
@@ -97,6 +98,25 @@ How it works:
 - The proxy tracks how many requests each key has made in the current window.
 - If the number of requests exceeds `limit`, further requests from that key receive a `429 Too Many Requests` response until the window resets.
 - You can customize the keying strategy to rate-limit by IP, by a specific header (e.g., `Authorization`), or by any custom logic.
+
+### Throttling
+
+The `throttle` middleware simulates slow network conditions by limiting the bandwidth of responses. It works by chunking the response body and introducing delays between chunks, based on the configured rate. If streaming is not supported in the runtime, it falls back to delaying the entire response.
+
+- `rate` (required): Maximum bandwidth in bytes per second (e.g., `1024` for 1KB/sec).
+- `chunkSize` (optional): Size of each chunk in bytes (default: `16384`).
+- `key` (optional): Used to throttle per client; can be a header name or a custom function.
+
+How it works:
+- If the response body is a stream (Node.js `Stream` or browser/edge `ReadableStream`), the middleware splits it into chunks and delays each chunk to match the specified rate.
+- If the response body is not a stream (e.g., string, buffer), the middleware calculates the total delay needed to simulate the bandwidth and delays the response accordingly.
+- The middleware uses feature detection to choose the best throttling strategy for the current runtime.
+
+Limitations:
+- True stream throttling is only available in runtimes that support streaming APIs (Node.js, browser, edge).
+- In runtimes without streaming support, only total response delay is simulated, not progressive delivery.
+- The accuracy of throttling may vary depending on the runtime and timer precision.
+- Not intended for production use; designed for local development and testing.
 
 ## Extensibility
 
