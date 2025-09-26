@@ -1,6 +1,6 @@
 {
   "name": "@fetchkit/chaos-fetch",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Client-side chaos-testing library for JavaScript/TypeScript apps.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

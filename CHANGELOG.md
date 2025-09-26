@@ -1,5 +1,22 @@
 # chaos-fetch
 
+## 0.4.0
+
+### Minor Changes
+
+- 3e88f34: Added
+  - throttle middleware
+  - github CI
+  - precommit hook
+  - eslint
+  - badges to readme
+
+  Changed
+  - route matching logic
+
+  Fixed
+  - lint errors
+
 ## 0.3.1
 
 ### Patch Changes
