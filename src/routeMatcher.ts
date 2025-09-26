@@ -45,15 +45,7 @@ export class RouteMatcher {
         return chaosLayer.chaosMiddlewares;
       }
     }
-    // Fallback to path-only route
-    const matchPlain = this.router.match(path, "");
-    if (matchPlain && matchPlain.pathAndMethod.length > 0) {
-      const layer = matchPlain.pathAndMethod[0];
-      const chaosLayer = layer as LayerWithChaos;
-      if (Array.isArray(chaosLayer.chaosMiddlewares)) {
-        return chaosLayer.chaosMiddlewares;
-      }
-    }
+    // ...existing code...
     return [];
   }
 }
