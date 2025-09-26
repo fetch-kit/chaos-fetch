@@ -1,4 +1,10 @@
 
+[![npm version](https://img.shields.io/npm/v/@fetchkit/chaos-fetch.svg?style=flat-square)](https://www.npmjs.com/package/@fetchkit/chaos-fetch)
+[![npm downloads](https://img.shields.io/npm/dm/@fetchkit/chaos-fetch.svg?style=flat-square)](https://www.npmjs.com/package/@fetchkit/chaos-fetch)
+[![GitHub stars](https://img.shields.io/github/stars/fetch-kit/chaos-fetch?style=flat-square)](https://github.com/fetch-kit/chaos-fetch/stargazers)
+[![CI](https://github.com/fetch-kit/chaos-fetch/actions/workflows/ci.yaml/badge.svg)](https://github.com/fetch-kit/chaos-fetch/actions/workflows/ci.yaml)
+[![codecov](https://codecov.io/gh/fetch-kit/chaos-fetch/branch/main/graph/badge.svg)](https://codecov.io/gh/fetch-kit/chaos-fetch)
+
 # chaos-fetch
 
 A TypeScript/ESM client library for injecting network chaos (latency, failures, drops, etc.) into fetch requests. Inspired by [chaos-proxy](https://github.com/gkoos/chaos-proxy), but designed for programmatic use and composable middleware.
