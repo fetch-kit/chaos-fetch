@@ -65,12 +65,20 @@ restoreGlobalFetch(); // to restore original fetch
 
 ### Routing
 
-Chaos Proxy uses Koa Router for path matching, supporting named parameters (e.g., `/users/:id`), wildcards (e.g., `*`), and regex routes.
+Chaos Proxy uses @koa/router for path matching, supporting named parameters (e.g., `/users/:id`), wildcards (e.g., `*`), and regex routes.
 
 - Example: `"GET /api/*"` matches any GET request under `/api/`.
 - Example: `"GET /users/:id"` matches GET requests like `/users/123`.
 
+**Supported Route Patterns:**
+- **Named parameters:** `/users/:id` — Matches any path like `/users/123`. The value is available in middleware as `ctx.params.id`.
+- **Wildcards:** `/api/*` — Matches any path under `/api/`. The matched part is available as `ctx.params[0]`.
+- **Regex:** `/files/(.*)` — Matches any path under `/files/`. The matched part is available as `ctx.params[0]`.
+
+In your custom middleware, you can access all matched parameters via the Koa context object (`ctx.params`). For example, for `/users/:id`, `ctx.params.id` will contain the value from the URL. For wildcards and regex, use `ctx.params[0]` for the first matched segment.
+
 **Rule inheritance:**
+- Domains are not considered in route matching, only the method and path. This simplification is a tradeoff: it reduces configuration complexity but means you cannot target rules to specific domains. If you need domain-specific behavior, consider using separate clients or custom middleware.
 - There is no inheritance between global and route-specific middleware.
 - Global middlewares apply to every request.
 - Route middlewares only apply to requests matching that route.
@@ -79,7 +87,6 @@ Chaos Proxy uses Koa Router for path matching, supporting named parameters (e.g.
 - If no route matches, only global middlewares are applied.
 - Order of middleware execution: global middlewares run first, followed by route-specific middlewares in the order they are defined. Example: If you have a global latency of 100ms and a route-specific failNth, a request to that route will first incur the 100ms latency, then be subject to the failNth logic.
 - Routes can be defined with or without HTTP methods. If a method is specified (e.g., `GET /path`), the rule only applies to that method. If no method is specified (e.g., `/path`), the rule applies to all methods for that path.
-- Domain can also be specified (e.g., `GET https://api.example.com/path`). If no domain is specified, the rule applies to all domains.
 
 ## Middleware Primitives
 

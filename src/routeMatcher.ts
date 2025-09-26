@@ -1,56 +1,57 @@
+import Router from '@koa/router';
+
+interface LayerWithChaos extends Router.Layer {
+  chaosMiddlewares?: MiddlewareConfig[];
+}
 export type MiddlewareConfig = Record<string, unknown>;
 
-export interface RouteConfig {
-  path: string;
-  method?: string;
-  middlewares: MiddlewareConfig[];
-}
-
 export class RouteMatcher {
-  private routeMap: Map<string, MiddlewareConfig[]>;
+  private router: Router;
 
   constructor(routes: Record<string, MiddlewareConfig[]>) {
-    this.routeMap = new Map();
+    this.router = new Router();
     for (const key in routes) {
-      this.routeMap.set(key, routes[key]);
+      // Parse key: "METHOD /path" or "/path"
+      const parts = key.split(' ');
+      let method = '';
+      let path = '';
+      if (parts.length === 2) {
+        method = parts[0];
+        path = parts[1];
+      } else {
+        path = parts[0];
+      }
+      const mws = routes[key];
+      const layer = this.router.register(path, method ? [method.toUpperCase()] : [], () => {}) as LayerWithChaos;
+      layer.chaosMiddlewares = mws;
     }
   }
 
   match(method: string, url: string): MiddlewareConfig[] {
-    let domain = "";
-    let path = "";
+    let path = '';
     try {
       const urlObj = new URL(url);
-      domain = urlObj.host;
       path = urlObj.pathname;
     } catch {
       path = url;
     }
     const methodUpper = method.toUpperCase();
-
-    const key1 = `${methodUpper} ${domain}${path}`;
-    if (this.routeMap.has(key1)) return this.routeMap.get(key1)!;
-
-    const key2 = `${domain}${path}`;
-    if (this.routeMap.has(key2)) return this.routeMap.get(key2)!;
-
-    const key3 = `${methodUpper} ${path}`;
-    if (this.routeMap.has(key3)) return this.routeMap.get(key3)!;
-
-    if (this.routeMap.has(path)) return this.routeMap.get(path)!;
-
-    for (const [key, mws] of this.routeMap.entries()) {
-      const methodMatch = key.match(/^(\w+)\s+/);
-      if (methodMatch) {
-        const keyMethod = methodMatch[1].toUpperCase();
-        const keyPath = key.slice(methodMatch[0].length);
-        if (keyMethod === methodUpper && path.endsWith(keyPath)) {
-          return mws;
-        }
-      } else {
-        if (path.endsWith(key)) {
-          return mws;
-        }
+    // Match by method and path only
+    const matchMethod = this.router.match(path, methodUpper);
+    if (matchMethod && matchMethod.pathAndMethod.length > 0) {
+      const layer = matchMethod.pathAndMethod[0];
+      const chaosLayer = layer as LayerWithChaos;
+      if (Array.isArray(chaosLayer.chaosMiddlewares)) {
+        return chaosLayer.chaosMiddlewares;
+      }
+    }
+    // Fallback to path-only route
+    const matchPlain = this.router.match(path, "");
+    if (matchPlain && matchPlain.pathAndMethod.length > 0) {
+      const layer = matchPlain.pathAndMethod[0];
+      const chaosLayer = layer as LayerWithChaos;
+      if (Array.isArray(chaosLayer.chaosMiddlewares)) {
+        return chaosLayer.chaosMiddlewares;
       }
     }
     return [];
