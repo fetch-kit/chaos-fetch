@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { throttle } from '../../src/middlewares/throttle';
 
-function createCtx(body: any) {
+function createCtx(body: unknown) {
   return {
     req: new Request('https://api.test'),
-    res: new Response(body),
+    res: new Response(body as BodyInit | null | undefined),
   };
 }
 
@@ -21,7 +21,7 @@ describe('throttle middleware', () => {
     const mw = throttle({ rate: 1024 }); // 1KB/sec
     const ctx = createCtx(str);
     const next = vi.fn();
-    const start = Date.now();
+  // const start = Date.now(); // removed unused variable
     const promise = mw(ctx, next);
     // Should delay by 1000ms
     await vi.advanceTimersByTimeAsync(1000);

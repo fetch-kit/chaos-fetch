@@ -3,7 +3,7 @@ import { createClient, replaceGlobalFetch, restoreGlobalFetch, registerMiddlewar
 
 describe('chaos-fetch client', () => {
   it('applies global middleware', async () => {
-    const mockFetch = vi.fn(async (req: any) => {
+  const mockFetch = vi.fn(async (req: unknown) => {
       let url: string = '';
       if (typeof req === 'string') url = req;
       else if (req instanceof Request) url = req.url;
@@ -23,7 +23,7 @@ describe('chaos-fetch client', () => {
   });
 
   it('applies route middleware', async () => {
-    const mockFetch = vi.fn(async (req: any) => {
+  const mockFetch = vi.fn(async (req: unknown) => {
       let url: string = '';
       if (typeof req === 'string') url = req;
       else if (req instanceof Request) url = req.url;
@@ -47,7 +47,7 @@ describe('chaos-fetch client', () => {
   });
 
   it('can replace and restore global fetch', async () => {
-    const mockFetch = vi.fn(async (req: any) => {
+  const mockFetch = vi.fn(async (req: unknown) => {
       let url: string = '';
       if (typeof req === 'string') url = req;
       else if (req instanceof Request) url = req.url;
@@ -66,12 +66,8 @@ describe('chaos-fetch client', () => {
   });
 
   it('throws if no response from chaos client', async () => {
-    const mockFetch = vi.fn(async (req: any) => {
-      return new Response(JSON.stringify({ ok: true }));
-    });
-    const chaosFetch = createClient({ global: [], routes: {} }, mockFetch);
     // Patch runMiddlewares to not set ctx.res
-    const brokenFetch = async (...args: any[]) => { throw new Error('No response from chaos client'); };
-  await expect(brokenFetch()).rejects.toThrow('No response from chaos client');
+    const brokenFetch = async () => { throw new Error('No response from chaos client'); };
+    await expect(brokenFetch()).rejects.toThrow('No response from chaos client');
   });
 });

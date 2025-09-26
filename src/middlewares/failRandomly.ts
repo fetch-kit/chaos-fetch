@@ -1,4 +1,4 @@
-import type { Middleware, Context } from '../registry/middleware';
+import type { Middleware } from '../registry/middleware';
 
 export function failRandomly(opts: { rate: number; status?: number; body?: string }): Middleware {
   return async (ctx, next) => {

@@ -1,4 +1,4 @@
-import type { Middleware, Context } from '../registry/middleware';
+import type { Middleware } from '../registry/middleware';
 
 export function latency(ms: number): Middleware {
   return async (ctx, next) => {

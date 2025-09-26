@@ -1,7 +1,7 @@
 import compose from 'koa-compose';
-import type { Middleware } from './registry/middleware';
+import type { Middleware, Context } from './registry/middleware';
 
 // Compose and run a middleware chain
-export function runMiddlewares(middlewares: Middleware[], ctx: any): Promise<void> {
+export function runMiddlewares(middlewares: Middleware[], ctx: Context): Promise<void> {
   return compose(middlewares)(ctx, async () => {});
 }

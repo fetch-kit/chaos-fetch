@@ -15,10 +15,10 @@ export function rateLimit(opts: RateLimitOptions) {
   } else if (typeof opts.key === 'string') {
     getKey = (req: Request) => req.headers.get(opts.key as string) || 'unknown';
   } else {
-    getKey = (req: Request) => 'unknown';
+    getKey = () => 'unknown';
   }
 
-  return async (ctx: any, next: () => Promise<void>) => {
+  return async (ctx: { req: Request; res?: Response }, next: () => Promise<void>) => {
     const key = getKey(ctx.req);
     const now = Date.now();
     let entry = db.get(key);

@@ -8,10 +8,10 @@ describe('middleware registry', () => {
       return next();
     });
     const mw = resolveMiddleware({ test: { value: 42 } });
-    const ctx: any = {};
+  const ctx = { req: new Request('https://api.test') };
     let called = false;
     mw(ctx, async () => { called = true; });
-    expect(ctx.test).toBe(42);
+  expect((ctx as Record<string, unknown>).test).toBe(42);
     expect(called).toBe(true);
   });
 
@@ -20,8 +20,8 @@ describe('middleware registry', () => {
   });
 
   it('throws for invalid node', () => {
-    expect(() => resolveMiddleware(null as any)).toThrow('Invalid middleware node');
-    expect(() => resolveMiddleware(123 as any)).toThrow('Invalid middleware node');
+  expect(() => resolveMiddleware(null as unknown as Record<string, unknown>)).toThrow('Invalid middleware node');
+  expect(() => resolveMiddleware(123 as unknown as Record<string, unknown>)).toThrow('Invalid middleware node');
     expect(() => resolveMiddleware({})).toThrow('Middleware node must have exactly one key');
     expect(() => resolveMiddleware({ a: 1, b: 2 })).toThrow('Middleware node must have exactly one key');
   });

@@ -1,83 +1,70 @@
-import { LRUCache } from 'lru-cache';
-
 export interface ThrottleOptions {
   rate: number; // bytes per second
   chunkSize?: number; // bytes per chunk
-  key?: string | ((req: Request) => string);
 }
 
-// Helper: sleep for ms
-function sleep(ms: number) {
+function sleep(ms: number): Promise<void> {
   return new Promise((res) => setTimeout(res, ms));
 }
 
-// Feature detection
-function isNodeStream(body: any): boolean {
-  return body && typeof body.pipe === 'function';
+function isNodeStream(body: unknown): body is NodeJS.ReadableStream {
+  return !!body && typeof (body as NodeJS.ReadableStream).pipe === 'function';
 }
 
-function isReadableStream(body: any): boolean {
-  return typeof body === 'object' && body !== null && typeof body.getReader === 'function';
+function isReadableStream(body: unknown): body is { getReader: () => ReadableStreamDefaultReader<Uint8Array> } {
+  return typeof body === 'object' && body !== null && typeof (body as { getReader?: () => ReadableStreamDefaultReader<Uint8Array> }).getReader === 'function';
 }
 
 export function throttle(opts: ThrottleOptions) {
-  const db = new LRUCache<string, any>({ max: 10000 });
-  let getKey: (req: Request) => string;
-  if (typeof opts.key === 'function') {
-    getKey = opts.key;
-  } else if (typeof opts.key === 'string') {
-    getKey = (req: Request) => req.headers.get(opts.key as string) || 'unknown';
-  } else {
-    getKey = () => 'unknown';
-  }
-
   const chunkSize = opts.chunkSize || 16384;
-
-  return async (ctx: any, next: () => Promise<void>) => {
+  return async function throttleMiddleware(ctx: { req: Request; res?: Response }, next: () => Promise<void>) {
     await next();
-    const key = getKey(ctx.req);
     const rate = opts.rate;
     if (!ctx.res || !ctx.res.body) return;
     const body = ctx.res.body;
 
-    // Node.js stream
+    // Node.js stream: wrap in web-compatible ReadableStream
     if (isNodeStream(body)) {
-      // Dynamically require stream.Transform to avoid browser bundling
-      let Transform;
-      try {
-        Transform = require('stream').Transform;
-      } catch {}
-      if (Transform) {
-        class ThrottleStream extends Transform {
-          private chunkSize: number;
-          private rate: number;
-          constructor(chunkSize: number, rate: number) {
-            super();
-            this.chunkSize = chunkSize;
-            this.rate = rate;
+      const nodeStream = body;
+      const throttledStream = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          function handleChunk() {
+            const chunk = nodeStream.read(chunkSize);
+            if (chunk === null) {
+              nodeStream.once('readable', handleChunk);
+              return;
+            }
+            let data: Uint8Array;
+            if (typeof chunk === 'string') {
+              data = new TextEncoder().encode(chunk);
+            } else if (Buffer.isBuffer(chunk)) {
+              data = new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+            } else {
+              // Unknown chunk type, skip
+              return;
+            }
+            controller.enqueue(data);
+            const delay = (data.length / rate) * 1000;
+            sleep(delay).then(() => handleChunk());
           }
-          _transform(chunk: Buffer, encoding: BufferEncoding, callback: (err?: Error | null) => void) {
-            let offset = 0;
-            const sendChunk = () => {
-              if (offset >= chunk.length) return callback();
-              const toSend = Math.min(this.chunkSize, chunk.length - offset);
-              this.push(chunk.slice(offset, offset + toSend));
-              offset += toSend;
-              const delay = (toSend / this.rate) * 1000;
-              setTimeout(sendChunk, delay);
-            };
-            sendChunk();
+          handleChunk();
+        },
+        cancel() {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if ('destroy' in nodeStream && typeof (nodeStream as any).destroy === 'function') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (nodeStream as any).destroy();
           }
         }
-        ctx.res.body = body.pipe(new ThrottleStream(chunkSize, rate));
-        return;
-      }
+      });
+      ctx.res = new Response(throttledStream, ctx.res);
+      return;
     }
 
     // Browser/edge ReadableStream
     if (isReadableStream(body)) {
       const reader = body.getReader();
-      const throttledStream = new ReadableStream({
+      const throttledStream = new ReadableStream<Uint8Array>({
         async pull(controller) {
           const { value, done } = await reader.read();
           if (done) {
@@ -94,21 +81,21 @@ export function throttle(opts: ThrottleOptions) {
     }
 
     // Fallback: non-stream response (Buffer, string, etc.)
-    let raw;
+    let raw: Uint8Array | undefined;
     if (typeof body === 'string') {
-      raw = Buffer.from(body);
-    } else if (body instanceof ArrayBuffer) {
-      raw = Buffer.from(body);
-    } else if (body instanceof Uint8Array) {
-      raw = Buffer.from(body);
-    } else if (body && typeof body === 'object' && typeof body.text === 'function') {
-      raw = Buffer.from(await body.text());
+      raw = new TextEncoder().encode(body);
+    } else if (Object.prototype.toString.call(body) === '[object ArrayBuffer]') {
+      raw = new Uint8Array(body as ArrayBuffer);
+    } else if (Object.prototype.toString.call(body) === '[object Uint8Array]') {
+      raw = body as Uint8Array;
     } else {
       // Unknown type, skip throttling
       return;
     }
-    const totalDelay = (raw.length / rate) * 1000;
-    await sleep(totalDelay);
-    ctx.res = new Response(raw, ctx.res);
+    if (raw) {
+      const totalDelay = (raw.length / rate) * 1000;
+      await sleep(totalDelay);
+      ctx.res = new Response(raw.buffer as ArrayBuffer, ctx.res);
+    }
   };
 }

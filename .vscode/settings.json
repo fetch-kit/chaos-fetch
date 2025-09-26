@@ -1,0 +1,15 @@
+{
+    // Enable ESLint extension and show errors in Problems panel
+    "eslint.enable": true,
+    "eslint.run": "onType",
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    // Optionally, auto-fix on save
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
+    }
+}

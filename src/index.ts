@@ -1,6 +1,5 @@
-
 import { registerBuiltins } from './registry/builtin';
-import { resolveMiddleware } from './registry/middleware';
+import { resolveMiddleware, Middleware, Context } from './registry/middleware';
 import { runMiddlewares } from './middlewareEngine';
 import { RouteMatcher } from './routeMatcher';
 
@@ -9,9 +8,15 @@ export { registerMiddleware } from './registry/middleware';
 
 const nativeFetch = typeof fetch === 'function' ? fetch : undefined;
 
+type MiddlewareConfig = Record<string, unknown>;
+
+interface ChaosConfig {
+  global: MiddlewareConfig[];
+  routes: Record<string, MiddlewareConfig[]>;
+}
 
 export function createClient(
-  config: { global: any[]; routes: Record<string, any[]> },
+  config: ChaosConfig,
   baseFetch?: typeof fetch
 ): typeof fetch {
   registerBuiltins();
@@ -23,15 +28,15 @@ export function createClient(
     const req = input instanceof Request ? input : new Request(input, init);
     const method = req.method || 'GET';
     const routeMiddlewares = routeMatcher.match(method, req.url).map(resolveMiddleware);
-    const chain = [
+    const chain: Middleware[] = [
       ...globalChain,
       ...routeMiddlewares,
-      async (ctx: any) => {
+      async (ctx: Context) => {
         if (!realFetch) throw new Error('No fetch implementation available');
         ctx.res = await realFetch(ctx.req);
       }
     ];
-    const ctx: any = { req, res: undefined, err: undefined, state: {} };
+    const ctx: Context = { req, res: undefined, err: undefined, state: {} };
     await runMiddlewares(chain, ctx);
     if (ctx.res) return ctx.res;
     throw ctx.err || new Error('No response from chaos client');
