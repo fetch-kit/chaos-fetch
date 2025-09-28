@@ -11,8 +11,8 @@ const nativeFetch = typeof fetch === 'function' ? fetch : undefined;
 type MiddlewareConfig = Record<string, unknown>;
 
 interface ChaosConfig {
-  global: MiddlewareConfig[];
-  routes: Record<string, MiddlewareConfig[]>;
+  global?: MiddlewareConfig[];
+  routes?: Record<string, MiddlewareConfig[]>;
 }
 
 export function createClient(

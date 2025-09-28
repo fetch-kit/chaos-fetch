@@ -2,6 +2,49 @@ import { describe, it, expect, vi } from 'vitest';
 import { createClient, replaceGlobalFetch, restoreGlobalFetch, registerMiddleware } from '../src/index';
 
 describe('chaos-fetch client', () => {
+  it('works with no config properties (no global, no routes)', async () => {
+    const mockFetch = vi.fn(async (req: RequestInfo | URL) => {
+      const url = req instanceof Request ? req.url : String(req);
+      return new Response(url);
+    });
+    const chaosFetch = createClient({}, mockFetch);
+    const res = await chaosFetch('https://fallback.test/path');
+    expect(await res.text()).toBe('https://fallback.test/path');
+    expect(mockFetch).toHaveBeenCalled();
+  });
+
+  it('works with only global middleware', async () => {
+    registerMiddleware('addHeader', () => async (ctx, next) => {
+      ctx.req = new Request(ctx.req, { headers: { 'X-Test': '1' } });
+      await next();
+    });
+    const mockFetch = vi.fn(async (req: RequestInfo | URL) => {
+      const url = req instanceof Request ? req.url : String(req);
+      const headers = req instanceof Request ? req.headers.get('X-Test') : undefined;
+      return new Response(JSON.stringify({ url, header: headers }));
+    });
+    const chaosFetch = createClient({ global: [{ addHeader: {} }] }, mockFetch);
+    const res = await chaosFetch('https://onlyglobal.test/path');
+    const data = await res.json();
+    expect(data.url).toBe('https://onlyglobal.test/path');
+    expect(data.header).toBe('1');
+  });
+
+  it('works with only routes middleware', async () => {
+    registerMiddleware('addQuery', () => async (ctx, next) => {
+      const url = new URL(ctx.req.url);
+      url.searchParams.set('foo', 'bar');
+      ctx.req = new Request(url.toString(), ctx.req);
+      await next();
+    });
+    const mockFetch = vi.fn(async (req: RequestInfo | URL) => {
+      const url = req instanceof Request ? req.url : String(req);
+      return new Response(url);
+    });
+    const chaosFetch = createClient({ routes: { 'GET /route': [{ addQuery: {} }] } }, mockFetch);
+    const res = await chaosFetch('http://host/route');
+    expect(await res.text()).toContain('foo=bar');
+  });
   it('resolves relative URLs using globalThis.location.origin', async () => {
     const origin = 'https://example.com';
     const oldLocation = globalThis.location;
