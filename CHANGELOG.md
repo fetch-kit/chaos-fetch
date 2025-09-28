@@ -1,5 +1,19 @@
 # chaos-fetch
 
+## 0.7.0
+
+### Minor Changes
+
+- 0c1f909: Added
+  - relative url handling, where available
+  - mock() middleware import
+
+  Changed
+  - global and routes made optional in config
+
+  Fixed
+  - documentation
+
 ## 0.6.0
 
 ### Minor Changes
