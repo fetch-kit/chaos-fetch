@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 0.6.0
+
+### Minor Changes
+
+- b39105e: Fixed
+  - build process
+
 ## 0.5.0
 
 ### Minor Changes
