@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 0.5.0
+
+### Minor Changes
+
+- 7a5b458: Added
+  - mock() middleware
+
 ## 0.4.0
 
 ### Minor Changes
