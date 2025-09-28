@@ -88,6 +88,9 @@ In your custom middleware, you can access all matched parameters via the Koa con
 - Order of middleware execution: global middlewares run first, followed by route-specific middlewares in the order they are defined. Example: If you have a global latency of 100ms and a route-specific failNth, a request to that route will first incur the 100ms latency, then be subject to the failNth logic.
 - Routes can be defined with or without HTTP methods. If a method is specified (e.g., `GET /path`), the rule only applies to that method. If no method is specified (e.g., `/path`), the rule applies to all methods for that path.
 
+**Relative URLs:**
+- If you use relative URLs (e.g., `/api/data`), the client will resolve them against `globalThis.location.origin` in browsers and JSDOM. In Node, Bun, or Deno, you have to provide a full absolute URL; otherwise, they will throw an error.
+
 ## Middleware Primitives
 
 - `latency(ms)` - delay every request with `ms`

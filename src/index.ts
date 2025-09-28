@@ -25,7 +25,19 @@ export function createClient(
   const realFetch = baseFetch || nativeFetch;
 
   const fetchWithChaos: typeof fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const req = input instanceof Request ? input : new Request(input, init);
+    let req: Request;
+    if (input instanceof Request) {
+      req = input;
+    } else {
+      let url = input;
+      if (typeof input === 'string' && !/^([a-z][a-z0-9+.-]*:)/i.test(input)) {
+        // Relative URL: resolve against globalThis.location.origin if available
+        if (typeof globalThis.location?.origin === 'string') {
+          url = new URL(input, globalThis.location.origin).href;
+        }
+      }
+      req = new Request(url, init);
+    }
     const method = req.method || 'GET';
     const routeMiddlewares = routeMatcher.match(method, req.url).map(resolveMiddleware);
     const chain: Middleware[] = [

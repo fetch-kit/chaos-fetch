@@ -2,6 +2,52 @@ import { describe, it, expect, vi } from 'vitest';
 import { createClient, replaceGlobalFetch, restoreGlobalFetch, registerMiddleware } from '../src/index';
 
 describe('chaos-fetch client', () => {
+  it('resolves relative URLs using globalThis.location.origin', async () => {
+    const origin = 'https://example.com';
+    const oldLocation = globalThis.location;
+    // Patch globalThis.location for the test
+  // @ts-expect-error: patching globalThis.location for test
+  globalThis.location = { origin };
+    const mockFetch = vi.fn(async (req: RequestInfo | URL) => {
+      const url = req instanceof Request ? req.url : String(req);
+      return new Response(url);
+    });
+    const chaosFetch = createClient({ global: [], routes: {} }, mockFetch);
+    // Relative path starting with '/'
+    const res1 = await chaosFetch('/foo');
+    expect(await res1.text()).toBe(`${origin}/foo`);
+    // Relative path without '/'
+    const res2 = await chaosFetch('bar');
+    expect(await res2.text()).toBe(`${origin}/bar`);
+  // Restore location
+  globalThis.location = oldLocation;
+  });
+
+  it('does not change absolute URLs', async () => {
+    const mockFetch = vi.fn(async (req: RequestInfo | URL) => {
+      const url = req instanceof Request ? req.url : String(req);
+      return new Response(url);
+    });
+    const chaosFetch = createClient({ global: [], routes: {} }, mockFetch);
+    const absUrl = 'https://other.com/baz';
+    const res = await chaosFetch(absUrl);
+    expect(await res.text()).toBe(absUrl);
+  });
+
+  it('does not resolve relative URLs if globalThis.location is missing', async () => {
+    const oldLocation = globalThis.location;
+  // @ts-expect-error: deleting globalThis.location for test
+  delete globalThis.location;
+    const mockFetch = vi.fn(async (req: RequestInfo | URL) => {
+      const url = req instanceof Request ? req.url : String(req);
+      return new Response(url);
+    });
+    const chaosFetch = createClient({ global: [], routes: {} }, mockFetch);
+  const relUrl = '/missing';
+  await expect(chaosFetch(relUrl)).rejects.toThrow(TypeError);
+  // Restore location
+  globalThis.location = oldLocation;
+  });
   it('applies global middleware', async () => {
   const mockFetch = vi.fn(async (req: unknown) => {
       let url: string = '';
