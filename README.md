@@ -90,13 +90,14 @@ In your custom middleware, you can access all matched parameters via the Koa con
 
 ## Middleware Primitives
 
-- `latency(ms)` — delay every request with `ms`
-- `latencyRange({ min, max })` — random delay between `min` and `max` ms
-- `fail({ status, body })` — always fail sending `status` and `body`
-- `failRandomly({ rate, status, body })` — fail with probability sending `status` and `body`
-- `failNth({ n, status, body })` — fail every nth request with `status` and `body`
-- `rateLimit({ limit, windowMs, key })` — rate limit to `limit` requests per `windowMs` milliseconds for each unique `key` (e.g., header, user, IP). Responds with 429 if limit exceeded
-- `throttle({ rate, chunkSize, key })` — limit response bandwidth to `rate` bytes per second, chunking responses by `chunkSize` bytes, for each unique `key` (e.g., header, user, IP).
+- `latency(ms)` - delay every request with `ms`
+- `latencyRange({ min, max })` - random delay between `min` and `max` ms
+- `fail({ status, body })` - always fail sending `status` and `body`
+- `fail({ status, body })` - always send `status` and `body`. `status` defaults to 200, and `body` defaults to an empty string. Use this to mock responses without making actual network requests.
+- `failRandomly({ rate, status, body })` - fail with probability sending `status` and `body`
+- `failNth({ n, status, body })` - fail every nth request with `status` and `body`
+- `rateLimit({ limit, windowMs, key })` - rate limit to `limit` requests per `windowMs` milliseconds for each unique `key` (e.g., header, user, IP). Responds with 429 if limit exceeded
+- `throttle({ rate, chunkSize, key })` - limit response bandwidth to `rate` bytes per second, chunking responses by `chunkSize` bytes, for each unique `key` (e.g., header, user, IP).
 
 ### Rate Limiting
 

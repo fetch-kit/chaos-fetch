@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { failRandomly } from '../../src/middlewares/failRandomly';
+import type { Context } from '../../src/registry/middleware';
 
 describe('failRandomly middleware', () => {
   it('fails at the expected rate', async () => {
@@ -7,8 +8,8 @@ describe('failRandomly middleware', () => {
     let failed = 0;
     let ok = 0;
     for (let i = 0; i < 10; i++) {
-      const ctx: any = {};
-      await mw(ctx, async () => { ctx.res = 'ok'; });
+      const ctx: Context = { req: {} as Request };
+      await mw(ctx, async () => { ctx.res = new Response('ok'); });
       if (ctx.res && ctx.res.status === 418) {
         const text = await ctx.res.text();
         expect(text).toBe('fail');
@@ -26,9 +27,9 @@ describe('failRandomly middleware', () => {
     let failed = 0;
     let ok = 0;
     for (let i = 0; i < 10; i++) {
-      const ctx: any = {};
-      await mw(ctx, async () => { ctx.res = 'ok'; });
-      if (ctx.res && ctx.res !== 'ok') {
+      const ctx: Context = { req: {} as Request };
+      await mw(ctx, async () => { new Response('ok'); });
+      if (ctx.res && (await ctx.res.text()) !== 'ok') {
         failed++;
       } else {
         ok++;

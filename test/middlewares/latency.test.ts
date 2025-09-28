@@ -1,11 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { latency } from '../../src/middlewares/latency';
+import type { Context } from '../../src/registry/middleware';
 
 describe('latency middleware', () => {
   it('delays by the specified ms (using fake timers)', async () => {
     vi.useFakeTimers();
     const mw = latency(50);
-    const ctx: any = {};
+    const ctx: Context = { req: {} as Request };
     let called = false;
     const promise = mw(ctx, async () => { called = true; });
     vi.advanceTimersByTime(49);
@@ -20,7 +21,7 @@ describe('latency middleware', () => {
   it('calls next after delay (using fake timers)', async () => {
     vi.useFakeTimers();
     const mw = latency(10);
-    const ctx: any = { called: false };
+    const ctx: Context = { req: {} as Request };
     const promise = mw(ctx, async () => { ctx.called = true; });
     vi.advanceTimersByTime(10);
     await promise;
