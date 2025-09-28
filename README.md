@@ -28,7 +28,7 @@ npm install @fetchkit/chaos-fetch
 ## Usage
 
 ```ts
-import { createClient, registerMiddleware } from 'chaos-fetch';
+import { createClient, registerMiddleware } from '@fetchkit/chaos-fetch';
 
 // Register a custom middleware (optional)
 registerMiddleware('customDelay', (opts) => async (ctx, next) => {
@@ -37,13 +37,13 @@ registerMiddleware('customDelay', (opts) => async (ctx, next) => {
 });
 
 const chaosFetch = createClient({
-	global: [																					// Global rules
-		{ customDelay: { ms: 50 } }, 										// Use custom middleware
-		{ failRandomly: { rate: 0.1, status: 503 } },		// 10% random failures
+	global: [                                        // Global rules
+		{ customDelay: { ms: 50 } },                   // Use custom middleware
+		{ failRandomly: { rate: 0.1, status: 503 } },  // 10% random failures
 	],
 	routes: {
-		'GET https://api.example.com/users/:id': [			// Specific route rules
-			{ failNth: { n: 3, status: 500 } },						// Fail every 3rd request with status 500
+		'GET api.example.com/users/:id': [             // Specific route rules
+			{ failNth: { n: 3, status: 500 } },          // Fail every 3rd request with status 500
 		],
 	},
 });
