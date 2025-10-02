@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 0.7.1
+
+### Patch Changes
+
+- ace2549: Added
+  - Discord release announcement
+
 ## 0.7.0
 
 ### Minor Changes
