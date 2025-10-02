@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 0.7.2
+
+### Patch Changes
+
+- bbc2eac: Added
+  - Discord section to readme
+
 ## 0.7.1
 
 ### Patch Changes
