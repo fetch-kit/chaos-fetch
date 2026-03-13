@@ -5,6 +5,7 @@ import { RouteMatcher } from './routeMatcher';
 
 export { replaceGlobalFetch, restoreGlobalFetch } from './fetchUtils';
 export { registerMiddleware } from './registry/middleware';
+export type { Context, Middleware } from './registry/middleware';
 
 const nativeFetch = typeof fetch === 'function' ? fetch : undefined;
 
@@ -22,7 +23,17 @@ export function createClient(
   registerBuiltins();
   const globalChain = config.global?.map?.(resolveMiddleware) ?? [];
   const routeMatcher = new RouteMatcher(config.routes ?? {});
+  const routeChainCache = new WeakMap<MiddlewareConfig[], Middleware[]>();
   const realFetch = baseFetch || nativeFetch;
+
+  const getRouteChain = (routeNodes: MiddlewareConfig[]): Middleware[] => {
+    if (routeNodes.length === 0) return [];
+    const cached = routeChainCache.get(routeNodes);
+    if (cached) return cached;
+    const resolved = routeNodes.map(resolveMiddleware);
+    routeChainCache.set(routeNodes, resolved);
+    return resolved;
+  };
 
   const fetchWithChaos: typeof fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     let req: Request;
@@ -39,7 +50,7 @@ export function createClient(
       req = new Request(url, init);
     }
     const method = req.method || 'GET';
-    const routeMiddlewares = routeMatcher.match(method, req.url).map(resolveMiddleware);
+    const routeMiddlewares = getRouteChain(routeMatcher.match(method, req.url));
     const chain: Middleware[] = [
       ...globalChain,
       ...routeMiddlewares,

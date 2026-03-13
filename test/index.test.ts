@@ -45,6 +45,29 @@ describe('chaos-fetch client', () => {
     const res = await chaosFetch('http://host/route');
     expect(await res.text()).toContain('foo=bar');
   });
+
+  it('preserves stateful route middleware across requests', async () => {
+    const mockFetch = vi.fn(async () => new Response('ok', { status: 200 }));
+    const chaosFetch = createClient({
+      routes: {
+        'GET /stateful': [{ failNth: { n: 2, status: 503, body: 'boom' } }]
+      }
+    }, mockFetch);
+
+    const first = await chaosFetch('http://host/stateful');
+    expect(first.status).toBe(200);
+    expect(await first.text()).toBe('ok');
+
+    const second = await chaosFetch('http://host/stateful');
+    expect(second.status).toBe(503);
+    expect(await second.text()).toBe('boom');
+
+    const third = await chaosFetch('http://host/stateful');
+    expect(third.status).toBe(200);
+    expect(await third.text()).toBe('ok');
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
   it('resolves relative URLs using globalThis.location.origin', async () => {
     const origin = 'https://example.com';
     const oldLocation = globalThis.location;
