@@ -34,7 +34,8 @@
   "license": "MIT",
   "dependencies": {
     "@koa/router": "^14.0.0",
-    "koa-compose": "^4.1.0"
+    "koa-compose": "^4.1.0",
+    "lru-cache": "^11.2.7"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
