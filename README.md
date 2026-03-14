@@ -15,7 +15,7 @@ A TypeScript/ESM client library for injecting network chaos (latency, failures, 
 - Programmatic API for fetch interception
 - Built-in middleware primitives: `latency`, `latencyRange`, `fail`, `failRandomly`, `failNth`
 - Extensible registry for custom middleware
-- Route matching by method, domain, and path
+- Route matching by method and path
 - Built on Koa components (`@koa/router` and `koa-compose`), it supports both request and response interception/modification
 - Robust short-circuiting: middleware can halt further processing
 
@@ -42,7 +42,8 @@ const chaosFetch = createClient({
 		{ failRandomly: { rate: 0.1, status: 503 } },  // 10% random failures
 	],
 	routes: {
-		'GET api.example.com/users/:id': [             // Specific route rules
+		// Route keys are method + path only (no domain)
+		'GET /users/:id': [                            // Specific route rules
 			{ failNth: { n: 3, status: 500 } },          // Fail every 3rd request with status 500
 		],
 	},
@@ -50,6 +51,8 @@ const chaosFetch = createClient({
 
 // Use as a drop-in replacement for fetch
 const res = await chaosFetch('https://api.example.com/users/123');
+// Same route rule also matches other domains with the same path
+await chaosFetch('https://staging.example.net/users/123');
 
 // Or replace global fetch
 replaceGlobalFetch(chaosFetch);
@@ -60,7 +63,7 @@ restoreGlobalFetch(); // to restore original fetch
 ## Configuration
 
 - `global`: Ordered array of middleware nodes applied to every request
-- `routes`: Map of method+domain+path to ordered array of middleware nodes
+- `routes`: Map of method+path to ordered array of middleware nodes
 - Both `global` and `routes` are optional. If omitted, no global or route-specific middleware will be applied.
 - Middleware node: `{ latency: 100 }`, `{ failRandomly: { rate: 0.1, status: 503 } }`, etc.
 
@@ -97,7 +100,7 @@ In your custom middleware, you can access all matched parameters via the Koa con
 - `latency(ms)` - delay every request with `ms`
 - `latencyRange({ min, max })` - random delay between `min` and `max` ms
 - `fail({ status, body })` - always fail sending `status` and `body`
-- `fail({ status, body })` - always send `status` and `body`. `status` defaults to 200, and `body` defaults to an empty string. Use this to mock responses without making actual network requests.
+- `mock({ status, body })` - always send `status` and `body`. `status` defaults to 200, and `body` defaults to an empty string. Use this to mock responses without making actual network requests.
 - `failRandomly({ rate, status, body })` - fail with probability sending `status` and `body`
 - `failNth({ n, status, body })` - fail every nth request with `status` and `body`
 - `rateLimit({ limit, windowMs, key })` - rate limit to `limit` requests per `windowMs` milliseconds for each unique `key` (e.g., header, user, IP). Responds with 429 if limit exceeded
