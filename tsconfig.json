@@ -8,7 +8,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "node10"
+    "moduleResolution": "bundler"
   },
   "include": ["src", "src/middlewares"],
   "exclude": ["node_modules", "dist", "tests"]
