@@ -117,7 +117,8 @@ export function throttle(opts: ThrottleOptions) {
     if (raw) {
       const totalDelay = (raw.length / rate) * 1000;
       await sleep(totalDelay);
-      ctx.res = new Response(raw.buffer as ArrayBuffer, ctx.res);
+      // Pass the exact Uint8Array view to avoid leaking bytes from the backing buffer.
+      ctx.res = new Response(raw, ctx.res);
     }
   };
 }
