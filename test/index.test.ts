@@ -100,6 +100,31 @@ describe('chaos-fetch client', () => {
     expect(await res.text()).toBe(absUrl);
   });
 
+  it('preserves fetch(request, init) override semantics', async () => {
+    const mockFetch = vi.fn(async (req: RequestInfo | URL) => {
+      const request = req instanceof Request ? req : new Request(req);
+      return new Response(JSON.stringify({
+        method: request.method,
+        header: request.headers.get('x-test'),
+      }));
+    });
+
+    const chaosFetch = createClient({ global: [], routes: {} }, mockFetch);
+    const input = new Request('https://example.test/resource', {
+      method: 'POST',
+      headers: { 'x-test': 'a' },
+    });
+
+    const res = await chaosFetch(input, {
+      method: 'PUT',
+      headers: { 'x-test': 'b' },
+    });
+
+    const payload = await res.json();
+    expect(payload.method).toBe('PUT');
+    expect(payload.header).toBe('b');
+  });
+
   it('does not resolve relative URLs if globalThis.location is missing', async () => {
     const oldLocation = globalThis.location;
   // @ts-expect-error: deleting globalThis.location for test

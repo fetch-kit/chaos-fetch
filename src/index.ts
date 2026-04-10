@@ -38,7 +38,8 @@ export function createClient(
   const fetchWithChaos: typeof fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     let req: Request;
     if (input instanceof Request) {
-      req = input;
+      // Keep native fetch(request, init) semantics: init overrides Request fields.
+      req = new Request(input, init);
     } else {
       let url = input;
       if (typeof input === 'string' && !/^([a-z][a-z0-9+.-]*:)/i.test(input)) {

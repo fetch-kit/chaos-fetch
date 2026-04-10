@@ -6,9 +6,8 @@ export interface RateLimitOptions {
   key?: string | ((req: Request) => string);
 }
 
-const db = new LRUCache<string, { count: number; reset: number }>({ max: 10000 });
-
 export function rateLimit(opts: RateLimitOptions) {
+  const db = new LRUCache<string, { count: number; reset: number }>({ max: 10000 });
   let getKey: (req: Request) => string;
   if (typeof opts.key === 'function') {
     getKey = opts.key;

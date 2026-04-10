@@ -20,36 +20,55 @@ export function throttle(opts: ThrottleOptions) {
   return async function throttleMiddleware(ctx: { req: Request; res?: Response }, next: () => Promise<void>) {
     await next();
     const rate = opts.rate;
+    if (!Number.isFinite(rate) || rate <= 0) return;
     if (!ctx.res || !ctx.res.body) return;
     const body = ctx.res.body;
 
     // Node.js stream: wrap in web-compatible ReadableStream
     if (isNodeStream(body)) {
       const nodeStream = body;
+      let cancelled = false;
       const throttledStream = new ReadableStream<Uint8Array>({
-        pull(controller) {
-          function handleChunk() {
-            const chunk = nodeStream.read(chunkSize);
-            if (chunk === null) {
-              nodeStream.once('readable', handleChunk);
-              return;
+        start(controller) {
+          const onError = (err: unknown) => {
+            controller.error(err);
+          };
+
+          const pump = async () => {
+            while (!cancelled) {
+              const chunk = nodeStream.read(chunkSize);
+              if (chunk === null) {
+                nodeStream.once('readable', () => {
+                  void pump();
+                });
+                return;
+              }
+
+              let data: Uint8Array | undefined;
+              if (typeof chunk === 'string') {
+                data = new TextEncoder().encode(chunk);
+              } else if (Buffer.isBuffer(chunk)) {
+                data = new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+              }
+
+              // Skip unsupported chunk shapes but keep draining the stream.
+              if (!data) continue;
+
+              controller.enqueue(data);
+              const delay = (data.length / rate) * 1000;
+              await sleep(delay);
             }
-            let data: Uint8Array;
-            if (typeof chunk === 'string') {
-              data = new TextEncoder().encode(chunk);
-            } else if (Buffer.isBuffer(chunk)) {
-              data = new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
-            } else {
-              // Unknown chunk type, skip
-              return;
-            }
-            controller.enqueue(data);
-            const delay = (data.length / rate) * 1000;
-            sleep(delay).then(() => handleChunk());
-          }
-          handleChunk();
+          };
+
+          void pump();
+
+          nodeStream.once('end', () => {
+            if (!cancelled) controller.close();
+          });
+          nodeStream.once('error', onError);
         },
         cancel() {
+          cancelled = true;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if ('destroy' in nodeStream && typeof (nodeStream as any).destroy === 'function') {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -69,6 +88,9 @@ export function throttle(opts: ThrottleOptions) {
           const { value, done } = await reader.read();
           if (done) {
             controller.close();
+            return;
+          }
+          if (!value) {
             return;
           }
           controller.enqueue(value);

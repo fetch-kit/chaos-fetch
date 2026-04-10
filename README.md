@@ -7,7 +7,7 @@
 
 # chaos-fetch
 
-A TypeScript/ESM client library for injecting network chaos (latency, failures, drops, etc.) into fetch requests. Inspired by [chaos-proxy](https://github.com/gkoos/chaos-proxy), but designed for programmatic use and composable middleware.
+A TypeScript/ESM client library for injecting network chaos (latency, failures, throttling, etc.) into fetch requests. Inspired by [chaos-proxy](https://github.com/gkoos/chaos-proxy), but designed for programmatic use and composable middleware.
 
 ## Features
 
@@ -75,11 +75,11 @@ Chaos Proxy uses @koa/router for path matching, supporting named parameters (e.g
 - Example: `"GET /users/:id"` matches GET requests like `/users/123`.
 
 **Supported Route Patterns:**
-- **Named parameters:** `/users/:id` — Matches any path like `/users/123`. The value is available in middleware as `ctx.params.id`.
-- **Wildcards:** `/api/*` — Matches any path under `/api/`. The matched part is available as `ctx.params[0]`.
-- **Regex:** `/files/(.*)` — Matches any path under `/files/`. The matched part is available as `ctx.params[0]`.
+- **Named parameters:** `/users/:id` — Matches any path like `/users/123`.
+- **Wildcards:** `/api/*` — Matches any path under `/api/`.
+- **Regex:** `/files/(.*)` — Matches any path under `/files/`.
 
-In your custom middleware, you can access all matched parameters via the Koa context object (`ctx.params`). For example, for `/users/:id`, `ctx.params.id` will contain the value from the URL. For wildcards and regex, use `ctx.params[0]` for the first matched segment.
+Note: route parameters are used internally for matching; they are not currently exposed on `ctx` for middleware consumption.
 
 **Rule inheritance:**
 - Domains are not considered in route matching, only the method and path. This simplification is a tradeoff: it reduces configuration complexity but means you cannot target rules to specific domains. If you need domain-specific behavior, consider using separate clients or custom middleware.
@@ -104,7 +104,7 @@ In your custom middleware, you can access all matched parameters via the Koa con
 - `failRandomly({ rate, status, body })` - fail with probability sending `status` and `body`
 - `failNth({ n, status, body })` - fail every nth request with `status` and `body`
 - `rateLimit({ limit, windowMs, key })` - rate limit to `limit` requests per `windowMs` milliseconds for each unique `key` (e.g., header, user, IP). Responds with 429 if limit exceeded
-- `throttle({ rate, chunkSize, key })` - limit response bandwidth to `rate` bytes per second, chunking responses by `chunkSize` bytes, for each unique `key` (e.g., header, user, IP).
+- `throttle({ rate, chunkSize })` - limit response bandwidth to `rate` bytes per second, chunking responses by `chunkSize` bytes.
 
 ### Rate Limiting
 
@@ -112,10 +112,10 @@ The `rateLimit` middleware restricts how many requests a client can make in a gi
 
 - `limit`: Maximum number of requests allowed per window (e.g., 100)
 - `windowMs`: Time window in milliseconds (e.g., 60000 for 1 minute)
-- `key`: How to identify clients (default is IP, but can be a header name or a custom function)
+- `key`: How to identify clients (default is `'unknown'`, but can be a header name or a custom function)
 
 How it works:
-- Each incoming request is assigned a key (usually the client's IP address).
+- Each incoming request is assigned a key.
 - The proxy tracks how many requests each key has made in the current window.
 - If the number of requests exceeds `limit`, further requests from that key receive a `429 Too Many Requests` response until the window resets.
 - You can customize the keying strategy to rate-limit by IP, by a specific header (e.g., `Authorization`), or by any custom logic.
@@ -126,7 +126,6 @@ The `throttle` middleware simulates slow network conditions by limiting the band
 
 - `rate` (required): Maximum bandwidth in bytes per second (e.g., `1024` for 1KB/sec).
 - `chunkSize` (optional): Size of each chunk in bytes (default: `16384`).
-- `key` (optional): Used to throttle per client; can be a header name or a custom function.
 
 How it works:
 - If the response body is a stream (Node.js `Stream` or browser/edge `ReadableStream`), the middleware splits it into chunks and delays each chunk to match the specified rate.

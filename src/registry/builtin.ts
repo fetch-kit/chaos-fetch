@@ -8,7 +8,10 @@ import { rateLimit, RateLimitOptions } from '../middlewares/rateLimit';
 import { throttle, ThrottleOptions } from '../middlewares/throttle';
 import { mock } from '../middlewares/mock';
 
+let builtinsRegistered = false;
+
 export function registerBuiltins() {
+  if (builtinsRegistered) return;
   // Register built-in middleware primitives
   registerMiddleware('latency', (opts) => latency(opts.ms as number));
   registerMiddleware('latencyRange', (opts) =>
@@ -24,4 +27,5 @@ export function registerBuiltins() {
   registerMiddleware('rateLimit', (opts) => rateLimit(opts as unknown as RateLimitOptions));
   registerMiddleware('throttle', (opts) => throttle(opts as unknown as ThrottleOptions));
   registerMiddleware('mock', (opts) => mock(opts as { status?: number; body?: string }));
+  builtinsRegistered = true;
 }
