@@ -63,6 +63,7 @@ export function throttle(opts: ThrottleOptions) {
           void pump();
 
           nodeStream.once('end', () => {
+            nodeStream.removeListener('error', onError);
             if (!cancelled) controller.close();
           });
           nodeStream.once('error', onError);

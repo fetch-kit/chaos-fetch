@@ -13,7 +13,7 @@ A TypeScript/ESM client library for injecting network chaos (latency, failures, 
 
 - Simple configuration via JavaScript/TypeScript
 - Programmatic API for fetch interception
-- Built-in middleware primitives: `latency`, `latencyRange`, `fail`, `failRandomly`, `failNth`
+- Built-in middleware primitives: `latency`, `latencyRange`, `fail`, `failRandomly`, `failNth`, `rateLimit`, `throttle`, `mock`
 - Extensible registry for custom middleware
 - Route matching by method and path
 - Built on Koa components (`@koa/router` and `koa-compose`), it supports both request and response interception/modification
@@ -87,7 +87,7 @@ Note: route parameters are used internally for matching; they are not currently 
 - Global middlewares apply to every request.
 - Route middlewares only apply to requests matching that route.
 - If a request matches a route, only the middlewares for that route (plus global) are applied. Route rules do not inherit or merge from parent routes or wildcards.
-- If multiple routes match, the most specific one is chosen (e.g., `/users/:id` over `/users/*`).
+- If multiple routes match, the first matching route configuration is used.
 - If no route matches, only global middlewares are applied.
 - Order of middleware execution: global middlewares run first, followed by route-specific middlewares in the order they are defined. Example: If you have a global latency of 100ms and a route-specific failNth, a request to that route will first incur the 100ms latency, then be subject to the failNth logic.
 - Routes can be defined with or without HTTP methods. If a method is specified (e.g., `GET /path`), the rule only applies to that method. If no method is specified (e.g., `/path`), the rule applies to all methods for that path.
@@ -151,7 +151,7 @@ registerMiddleware('myMiddleware', (opts) => async (ctx, next) => {
 });
 ```
 
-Under the hood, `chaos-proxy` uses [Koa](https://koajs.com/), so your custom middleware can leverage the full Koa context and ecosystem. Note that Koa middleware functions are async and take `(ctx, next)` parameters. Read more in the [Koa docs](https://koajs.com/#middleware). The reason for switching from Express to Koa is to enable async/await support which helps intercept both requests and responses more easily. In the /examples/middlewares folder, you can find a custom middleware implementation.
+Under the hood, `chaos-fetch` uses [Koa](https://koajs.com/) components (`@koa/router` and `koa-compose`), so your custom middleware can leverage the full Koa middleware pattern. Middleware functions are async and take `(ctx, next)` parameters. Read more in the [Koa docs](https://koajs.com/#middleware).
 
 ## Testing
 

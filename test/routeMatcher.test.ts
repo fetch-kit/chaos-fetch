@@ -55,4 +55,13 @@ describe('RouteMatcher', () => {
     expect(matcher.match('GET', '/regex/42')).toEqual([{ mwRegex: {} }]);
     expect(matcher.match('GET', '/regex/123')).toEqual([{ mwRegex: {} }]);
   });
+
+  it('returns the first registered route when multiple routes match', () => {
+    const matcher = new RouteMatcher({
+      '/users/:id': [{ mwFirst: {} }],
+      '/users/:userId': [{ mwSecond: {} }],
+    });
+    // Both routes match /users/123; first registered wins
+    expect(matcher.match('GET', '/users/123')).toEqual([{ mwFirst: {} }]);
+  });
 });
