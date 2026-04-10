@@ -103,7 +103,7 @@ Note: route parameters are used internally for matching; they are not currently 
 - `mock({ status, body })` - always send `status` and `body`. `status` defaults to 200, and `body` defaults to an empty string. Use this to mock responses without making actual network requests.
 - `failRandomly({ rate, status, body })` - fail with probability sending `status` and `body`
 - `failNth({ n, status, body })` - fail every nth request with `status` and `body`
-- `rateLimit({ limit, windowMs, key })` - rate limit to `limit` requests per `windowMs` milliseconds for each unique `key` (e.g., header, user, IP). Responds with 429 if limit exceeded
+- `rateLimit({ limit, windowMs, key })` - rate limit to `limit` requests per `windowMs` milliseconds. `key` can be a header name (string), a custom function `(req) => string`, or omitted (all requests share one bucket). Responds with 429 if limit exceeded
 - `throttle({ rate, chunkSize })` - limit response bandwidth to `rate` bytes per second, chunking responses by `chunkSize` bytes.
 
 ### Rate Limiting
@@ -112,13 +112,15 @@ The `rateLimit` middleware restricts how many requests a client can make in a gi
 
 - `limit`: Maximum number of requests allowed per window (e.g., 100)
 - `windowMs`: Time window in milliseconds (e.g., 60000 for 1 minute)
-- `key`: How to identify clients (default is `'unknown'`, but can be a header name or a custom function)
+- `key`: How to bucket requests. Options:
+  - **omitted** — all requests share one bucket (`'unknown'`)
+  - **string** — treated as a header name; the header's value is the bucket key. If the header is absent the bucket key falls back to `'unknown'`
+  - **function** `(req: Request) => string` — full control; return any string as the bucket key
 
 How it works:
-- Each incoming request is assigned a key.
-- The proxy tracks how many requests each key has made in the current window.
+- Each incoming request is assigned a key via the `key` option.
+- The middleware tracks how many requests each key has made in the current window (fixed window, resets from first request in that window).
 - If the number of requests exceeds `limit`, further requests from that key receive a `429 Too Many Requests` response until the window resets.
-- You can customize the keying strategy to rate-limit by IP, by a specific header (e.g., `Authorization`), or by any custom logic.
 
 ### Throttling
 
