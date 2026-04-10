@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src", "src/middlewares"],
   "exclude": ["node_modules", "dist", "tests"]
