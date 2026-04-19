@@ -1,5 +1,16 @@
 # chaos-fetch
 
+## 1.1.0
+
+### Minor Changes
+
+- 3fc12b6: Added
+  - OpenTelemetry support
+  - Local observibility stack
+
+  Changed
+  - CI/dev scripts tweaked
+
 ## 1.0.0
 
 ### Major Changes
