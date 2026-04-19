@@ -7,6 +7,7 @@ import { fail } from '../middlewares/fail';
 import { rateLimit, RateLimitOptions } from '../middlewares/rateLimit';
 import { throttle, ThrottleOptions } from '../middlewares/throttle';
 import { mock } from '../middlewares/mock';
+import { telemetryMiddlewareFactory } from '../telemetry/middleware';
 
 let builtinsRegistered = false;
 
@@ -27,5 +28,9 @@ export function registerBuiltins() {
   registerMiddleware('rateLimit', (opts) => rateLimit(opts as unknown as RateLimitOptions));
   registerMiddleware('throttle', (opts) => throttle(opts as unknown as ThrottleOptions));
   registerMiddleware('mock', (opts) => mock(opts as { status?: number; body?: string }));
+
+  // Register observability middleware
+  registerMiddleware('otel', (opts) => telemetryMiddlewareFactory(opts));
+
   builtinsRegistered = true;
 }

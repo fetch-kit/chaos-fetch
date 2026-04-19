@@ -1,6 +1,9 @@
 export type Context = { req: Request; res?: Response; [key: string]: unknown };
 export type Middleware = (ctx: Context, next: () => Promise<void>) => Promise<void>;
 
+// Re-export OtelConfig for convenience
+export type { OtelConfig } from '../telemetry/middleware';
+
 const middlewareRegistry: Record<string, (opts: Record<string, unknown>) => Middleware> = {};
 
 export function registerMiddleware(

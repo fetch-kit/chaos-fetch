@@ -2,9 +2,11 @@ import { registerBuiltins } from './registry/builtin';
 import { resolveMiddleware, Middleware, Context } from './registry/middleware';
 import { runMiddlewares } from './middlewareEngine';
 import { RouteMatcher } from './routeMatcher';
+import type { OtelConfig } from './telemetry/middleware';
 
 export { replaceGlobalFetch, restoreGlobalFetch } from './fetchUtils';
 export { registerMiddleware } from './registry/middleware';
+export { registerBuiltins } from './registry/builtin';
 export type { Context, Middleware } from './registry/middleware';
 
 const nativeFetch = typeof fetch === 'function' ? fetch : undefined;
@@ -12,6 +14,7 @@ const nativeFetch = typeof fetch === 'function' ? fetch : undefined;
 type MiddlewareConfig = Record<string, unknown>;
 
 interface ChaosConfig {
+  otel?: OtelConfig;
   global?: MiddlewareConfig[];
   routes?: Record<string, MiddlewareConfig[]>;
 }
@@ -21,7 +24,13 @@ export function createClient(
   baseFetch?: typeof fetch
 ): typeof fetch {
   registerBuiltins();
-  const globalChain = config.global?.map?.(resolveMiddleware) ?? [];
+  const globalNodes: MiddlewareConfig[] = [
+    ...(config.otel
+      ? [{ otel: config.otel as unknown as Record<string, unknown> }]
+      : []),
+    ...(config.global ?? []),
+  ];
+  const globalChain = globalNodes.map(resolveMiddleware);
   const routeMatcher = new RouteMatcher(config.routes ?? {});
   const routeChainCache = new WeakMap<MiddlewareConfig[], Middleware[]>();
   const realFetch = baseFetch || nativeFetch;

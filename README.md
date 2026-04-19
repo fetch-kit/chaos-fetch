@@ -28,7 +28,12 @@ npm install @fetchkit/chaos-fetch
 ## Usage
 
 ```ts
-import { createClient, registerMiddleware } from '@fetchkit/chaos-fetch';
+import {
+	createClient,
+	registerMiddleware,
+	replaceGlobalFetch,
+	restoreGlobalFetch,
+} from '@fetchkit/chaos-fetch';
 
 // Register a custom middleware (optional)
 registerMiddleware('customDelay', (opts) => async (ctx, next) => {
@@ -69,7 +74,7 @@ restoreGlobalFetch(); // to restore original fetch
 
 ### Routing
 
-Chaos Proxy uses @koa/router for path matching, supporting named parameters (e.g., `/users/:id`), wildcards (e.g., `*`), and regex routes.
+`chaos-fetch` uses `@koa/router` for path matching, supporting named parameters (e.g., `/users/:id`), wildcards (e.g., `*`), and regex routes.
 
 - Example: `"GET /api/*"` matches any GET request under `/api/`.
 - Example: `"GET /users/:id"` matches GET requests like `/users/123`.
@@ -98,7 +103,7 @@ Note: route parameters are used internally for matching; they are not currently 
 ## Middleware Primitives
 
 - `latency(ms)` - delay every request with `ms`
-- `latencyRange({ min, max })` - random delay between `min` and `max` ms
+- `latencyRange({ minMs, maxMs })` - random delay between `minMs` and `maxMs` ms
 - `fail({ status, body })` - always fail sending `status` and `body`
 - `mock({ status, body })` - always send `status` and `body`. `status` defaults to 200, and `body` defaults to an empty string. Use this to mock responses without making actual network requests.
 - `failRandomly({ rate, status, body })` - fail with probability sending `status` and `body`
@@ -153,10 +158,107 @@ registerMiddleware('myMiddleware', (opts) => async (ctx, next) => {
 
 Under the hood, `chaos-fetch` uses [Koa](https://koajs.com/) components (`@koa/router` and `koa-compose`), so your custom middleware can leverage the full Koa middleware pattern. Middleware functions are async and take `(ctx, next)` parameters. Read more in the [Koa docs](https://koajs.com/#middleware).
 
+## Observability
+
+`chaos-fetch` includes an optional OpenTelemetry middleware and a local observability stack for development.
+
+What is included:
+- Request-level tracing middleware (`otel`) with W3C Trace Context propagation (`traceparent`)
+- OTLP HTTP export to an OpenTelemetry Collector
+- Jaeger for trace search and inspection
+- Prometheus for spanmetrics
+- Grafana with a pre-provisioned dashboard (`chaos-fetch-observability`)
+
+**This is entirely optional**. If you do not configure `otel`, `chaos-fetch` runs without telemetry overhead.
+
+### Quickstart
+
+Prerequisites:
+- Docker Desktop (or equivalent Docker Engine + Compose)
+- Dependencies installed (`npm install`)
+
+Start the local stack:
+
+```sh
+npm run obs:up
+```
+
+Other useful commands:
+- Validate compose config: `npm run obs:validate`
+- Follow logs: `npm run obs:logs`
+- Stop stack: `npm run obs:down`
+- Full reset (including volumes): `npm run obs:reset`
+
+Local endpoints:
+- Grafana: `http://localhost:3000`
+- Prometheus: `http://localhost:9090`
+- Jaeger: `http://localhost:16686`
+- OTLP ingest (collector): `http://localhost:4318` (HTTP), `localhost:4317` (gRPC)
+
+### Telemetry Configuration
+
+Enable telemetry by adding an `otel` block to `createClient`:
+
+```ts
+import { createClient } from '@fetchkit/chaos-fetch';
+
+const chaosFetch = createClient({
+	otel: {
+		serviceName: 'checkout-web',
+		endpoint: 'http://localhost:4318',
+		flushIntervalMs: 1000,
+		maxBatchSize: 20,
+		maxQueueSize: 1000,
+		headers: {
+			'x-tenant-id': 'local-dev',
+		},
+	},
+	global: [
+		{ latencyRange: { minMs: 20, maxMs: 120 } },
+		{ failRandomly: { rate: 0.1, status: 503 } },
+	],
+});
+
+await chaosFetch('https://api.example.com/users/123');
+```
+
+`otel` options:
+- `serviceName` (required): service label used in traces/metrics
+- `endpoint` (required): OTLP base endpoint (for example `http://localhost:4318`)
+- `flushIntervalMs` (optional): export timer interval; default `5000`
+- `maxBatchSize` (optional): export batch size; default `100`
+- `maxQueueSize` (optional): max queued spans before dropping oldest; default `1000`
+- `headers` (optional): additional OTLP HTTP headers
+
+Notes:
+- The middleware marks spans as error when HTTP status is `>= 400` or if middleware throws.
+- Trace context is extracted from inbound `traceparent` if present; otherwise a new trace is started.
+
+### Grafana Dashboard
+
+The provisioned dashboard is named **Chaos Fetch Observability** (UID: `chaos-fetch-observability`).
+
+Panels included:
+- **Latency Percentiles (ms)**: p50 / p90 / p95 (stat values)
+- **Request Rate**: requests/sec from `calls_total`
+- **Error Rate**: cumulative ratio of 5xx `calls_total` to total `calls_total` (since process start)
+- **Calls by Route**: grouped by `http_method` + `http_target`
+
+If traffic is sparse, percentile and rate panels may appear flat or delayed until enough samples are present.
+
+### Troubleshooting
+
+If Grafana shows no/empty data:
+- Confirm containers are up: `npm run obs:ps`
+- Confirm collector target is healthy in Prometheus: `http://localhost:9090/targets`
+- Confirm traces appear in Jaeger (`http://localhost:16686`) for your `serviceName`
+- Confirm Grafana datasource points to Prometheus at `http://prometheus:9090`
+- Hard refresh Grafana after dashboard changes (`Ctrl+Shift+R`)
+
 ## Testing
 
-- Run tests: `npm run test:ci`
-- Check coverage: `npm run test:ci -- --coverage`
+- Run tests: `npm run test`
+- Check coverage: `npm run test:ci`
 
 ## Security & Limitations
 
