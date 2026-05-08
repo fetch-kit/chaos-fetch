@@ -158,6 +158,56 @@ registerMiddleware('myMiddleware', (opts) => async (ctx, next) => {
 
 Under the hood, `chaos-fetch` uses [Koa](https://koajs.com/) components (`@koa/router` and `koa-compose`), so your custom middleware can leverage the full Koa middleware pattern. Middleware functions are async and take `(ctx, next)` parameters. Read more in the [Koa docs](https://koajs.com/#middleware).
 
+## Comparison with MSW
+
+Both `chaos-fetch` and MSW help with API testing, but they optimize for different primary jobs.
+
+- `chaos-fetch` focuses on programmable fetch-level chaos and middleware-driven behavior.
+- MSW focuses on broad API mocking across browser and Node.js interception models.
+
+Use the matrix below as a quick chooser:
+
+| Capability | chaos-fetch | MSW | Recommended choice |
+| --- | --- | --- | --- |
+| Fetch-level chaos injection (latency, failNth, throttle, rate limits) | Native, first-class middleware primitives | Possible, but not the core focus | `chaos-fetch` |
+| Basic REST-style response mocking | Supported via `mock` middleware | Supported via `http.*` handlers | Either |
+| GraphQL-first mocking ergonomics | No first-class GraphQL API | First-class GraphQL APIs (`graphql.query`, `graphql.mutation`, etc.) | MSW |
+| WebSocket mocking/interception | No first-class support | First-class WebSocket API (`ws`) | MSW |
+| Browser network-level interception model | Fetch wrapper / global fetch replacement | Service Worker interception in browser | MSW |
+| Runtime handler lifecycle controls | Config-driven middleware setup | Built-in runtime APIs (`use`, `resetHandlers`, `restoreHandlers`) | MSW |
+| Observability-focused chaos workflows | Optional OTEL middleware and local observability stack included | No equivalent built-in observability stack | `chaos-fetch` |
+| Minimal setup for fetch-centric chaos testing | Lightweight client setup in app/tests | Additional mocking setup flow | `chaos-fetch` |
+
+### When to use chaos-fetch
+
+`chaos-fetch` is usually the better default if your main goal is resilience-oriented API testing:
+
+- Your app and tests are fetch-centric.
+- You want deterministic and programmable chaos scenarios.
+- You want one place to model latency, failures, rate limits, and throttling.
+- You want optional trace/metrics visibility for chaos runs.
+
+### When MSW may be a better fit
+
+MSW may be a better fit if your primary need is broad protocol-focused mocking:
+
+- You need GraphQL-first handler APIs.
+- You need WebSocket interception/mocking.
+- You want browser Service Worker interception behavior.
+- You rely heavily on runtime handler lifecycle controls.
+
+### Optional layered usage
+
+Some teams use both tools for different concerns: MSW for API behavior mocking and `chaos-fetch` for fault injection. This is optional. Start with one tool unless you have a clear need to separate behavior-mocking and resilience-injection responsibilities.
+
+### Quick decision checklist
+
+- Need fetch-focused chaos and resilience testing first? Start with `chaos-fetch`.
+- Need GraphQL or WebSocket-first mocking? Use MSW.
+- Need broad browser network-level interception behavior? Use MSW.
+- Need minimal setup for deterministic fault injection in fetch clients? Use `chaos-fetch`.
+- Need both protocol-rich mocking and transport chaos? Consider layering intentionally.
+
 ## Observability
 
 `chaos-fetch` includes an optional OpenTelemetry middleware and a local observability stack for development.
