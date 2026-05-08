@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 1.1.1
+
+### Patch Changes
+
+- 7d8a3f5: Documentation
+  - chaos-fetch vs MSW section added
+
 ## 1.1.0
 
 ### Minor Changes
