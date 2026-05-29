@@ -2,6 +2,12 @@
   "name": "@fetchkit/chaos-fetch",
   "version": "1.1.2",
   "description": "Client-side chaos-testing library for JavaScript/TypeScript apps.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fetch-kit/chaos-fetch.git"
+  },
+  "homepage": "https://github.com/fetch-kit/chaos-fetch#readme",
+  "bugs": "https://github.com/fetch-kit/chaos-fetch/issues",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
   "module": "dist/index.mjs",
