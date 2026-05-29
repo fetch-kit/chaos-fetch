@@ -4,20 +4,55 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
-    groups:
-      npm-minor-patch:
+    ignore:
+      - dependency-name: "eslint"
         update-types:
-          - minor
-          - patch
+          - version-update:semver-major
+      - dependency-name: "@typescript-eslint/*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "vitest"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@vitest/*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "tsup"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+      linting:
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+          - "@typescript-eslint/*"
+          - "eslint-config-prettier"
+          - "prettier"
+      release-tooling:
+        patterns:
+          - "@changesets/*"
+          - "husky"
+      runtime:
+        patterns:
+          - "@koa/router"
+          - "koa-compose"
+          - "lru-cache"
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
-      actions-minor-patch:
-        update-types:
-          - minor
-          - patch
+      github-actions:
+        patterns:
+          - "*"
