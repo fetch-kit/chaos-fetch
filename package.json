@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest --watch",
-    "prepare": "husky install",
+    "prepare": "husky",
     "test:ci": "vitest --run --coverage",
     "obs:up": "docker compose -f docker/observability/docker-compose.yml up -d",
     "obs:down": "docker compose -f docker/observability/docker-compose.yml down --remove-orphans",
@@ -41,7 +41,7 @@
     "testing",
     "typescript"
   ],
-  "author": "",
+  "author": "Gabor Koos <gabor@gaborkoos.com>",
   "license": "MIT",
   "dependencies": {
     "@koa/router": "^14.0.0",
