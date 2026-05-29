@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 1.1.3
+
+### Patch Changes
+
+- 7ec99a0: Fixed
+  - package.json repo metadata
+
 ## 1.1.2
 
 ### Patch Changes
