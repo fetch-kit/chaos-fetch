@@ -13,7 +13,7 @@ A TypeScript/ESM client library for injecting network chaos (latency, failures, 
 
 - Simple configuration via JavaScript/TypeScript
 - Programmatic API for fetch interception
-- Built-in middleware primitives: `latency`, `latencyRange`, `fail`, `failRandomly`, `failNth`, `rateLimit`, `throttle`, `mock`
+- Built-in middleware primitives: `latency`, `latencyRange`, `fail`, `failRandomly`, `failNth`, `failFirstN`, `rateLimit`, `throttle`, `mock`
 - Extensible registry for custom middleware
 - Route matching by method and path
 - Built on Koa components (`@koa/router` and `koa-compose`), it supports both request and response interception/modification
@@ -108,8 +108,13 @@ Note: route parameters are used internally for matching; they are not currently 
 - `mock({ status, body })` - always send `status` and `body`. `status` defaults to 200, and `body` defaults to an empty string. Use this to mock responses without making actual network requests.
 - `failRandomly({ rate, status, body })` - fail with probability sending `status` and `body`
 - `failNth({ n, status, body })` - fail every nth request with `status` and `body`
+- `failFirstN({ n, status, body })` - fail the first `n` requests, then always pass through
 - `rateLimit({ limit, windowMs, key })` - rate limit to `limit` requests per `windowMs` milliseconds. `key` can be a header name (string), a custom function `(req) => string`, or omitted (all requests share one bucket). Responds with 429 if limit exceeded
 - `throttle({ rate, chunkSize })` - limit response bandwidth to `rate` bytes per second, chunking responses by `chunkSize` bytes.
+
+Semantics note:
+- `failNth` is cyclical (it fails every nth request repeatedly).
+- `failFirstN` is one-shot (it fails only the first n requests, then permanently passes through).
 
 ### Rate Limiting
 
