@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 1.2.1
+
+### Patch Changes
+
+- ea8bb81: Added
+  - tests for builtin.ts
+
 ## 1.2.0
 
 ### Minor Changes
