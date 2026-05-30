@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 1.2.0
+
+### Minor Changes
+
+- 60363ed: Added
+  - failFirstN middleware to fail the first N requests, then pass through
+
 ## 1.1.3
 
 ### Patch Changes
