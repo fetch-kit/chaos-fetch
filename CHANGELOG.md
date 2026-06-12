@@ -1,5 +1,12 @@
 # chaos-fetch
 
+## 1.2.2
+
+### Patch Changes
+
+- ea19398: Dependencies
+  - dependency and actions maintenance updates from Dependabot
+
 ## 1.2.1
 
 ### Patch Changes
