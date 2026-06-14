@@ -7,6 +7,9 @@
 
 # chaos-fetch
 
+
+> Part of the **[fetch-kit ecosystem](https://fetchkit.org)** - production-ready fetch utilities and chaos-testing tools.
+
 A TypeScript/ESM client library for injecting network chaos (latency, failures, throttling, etc.) into fetch requests. Inspired by [chaos-proxy](https://github.com/gkoos/chaos-proxy), but designed for programmatic use and composable middleware.
 
 ## Features
