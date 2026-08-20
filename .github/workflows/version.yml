@@ -46,8 +46,8 @@ jobs:
       - name: Create Version PR
         uses: changesets/action@22ccf9aa43179fe9e27dc62e575971d28cce197c # v1
         with:
-          version: npm run version
-          commit: 'chore(release): version packages'
-          title: 'chore(release): version packages'
+          version-script: npm run version
+          commit-message: 'chore(release): version packages'
+          pr-title: 'chore(release): version packages'
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
