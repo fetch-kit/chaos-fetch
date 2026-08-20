@@ -7,19 +7,6 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 10
-    ignore:
-      - dependency-name: "eslint"
-        update-types:
-          - version-update:semver-major
-      - dependency-name: "@typescript-eslint/*"
-        update-types:
-          - version-update:semver-major
-      - dependency-name: "vitest"
-        update-types:
-          - version-update:semver-major
-      - dependency-name: "@vitest/*"
-        update-types:
-          - version-update:semver-major
     groups:
       typescript:
         patterns:
