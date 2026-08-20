@@ -30,7 +30,7 @@ import {
  * Configuration for the otel middleware
  * Combines export config with middleware behavior flags
  */
-export interface OtelConfig extends ExporterConfig {
+export type OtelConfig = ExporterConfig & {
   // ExporterConfig includes:
   // - endpoint: string
   // - serviceName: string
@@ -38,7 +38,7 @@ export interface OtelConfig extends ExporterConfig {
   // - maxBatchSize?: number
   // - maxQueueSize?: number
   // - headers?: Record<string, string>
-}
+};
 
 /**
  * Global exporter instance (singleton per service)
