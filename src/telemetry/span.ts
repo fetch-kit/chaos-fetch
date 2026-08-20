@@ -136,7 +136,7 @@ export function createSpan(
       path,
       serviceName,
     };
-  } catch (e) {
+  } catch {
     // If URL parsing fails, use the full URL as path
     return {
       traceId,
