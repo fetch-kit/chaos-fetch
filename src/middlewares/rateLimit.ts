@@ -22,7 +22,7 @@ export function rateLimit(opts: RateLimitOptions) {
     const now = Date.now();
     let entry = db.get(key);
 
-    if (!entry || now > entry.reset) {
+    if (!entry || now >= entry.reset) {
       entry = { count: 1, reset: now + opts.windowMs };
       db.set(key, entry);
     } else {

@@ -1,6 +1,6 @@
 import { rateLimit } from '../../src/middlewares/rateLimit';
 import type { Context } from '../../src/registry/middleware';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 function createCtx(headers: Record<string, string> = {}): Context {
   return {
@@ -53,6 +53,26 @@ describe('rateLimit middleware', () => {
     ctx.req = new Request('https://api.test', { headers: { 'X-Unique': keyValue } });
     await mw(ctx, next); // should be allowed again
     expect(ctx.res).toBeUndefined();
+  });
+
+  it('resets at the exact window boundary', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000);
+    const mw = rateLimit({ limit: 1, windowMs: 22, key: 'X-User' });
+    const first = createCtx({ 'X-User': 'beta' });
+    const atBoundary = createCtx({ 'X-User': 'beta' });
+    let called = 0;
+    const next = async () => {
+      called++;
+    };
+
+    await mw(first, next);
+    vi.setSystemTime(1_022);
+    await mw(atBoundary, next);
+
+    expect(atBoundary.res).toBeUndefined();
+    expect(called).toBe(2);
+    vi.useRealTimers();
   });
 
   it('uses custom key function', async () => {

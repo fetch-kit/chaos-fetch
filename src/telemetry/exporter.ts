@@ -21,6 +21,8 @@ export class OtlpExporter {
   private spans: Span[] = [];
   private flushTimer?: ReturnType<typeof setTimeout>;
   private isShuttingDown = false;
+  private processShutdownHandler?: () => Promise<void>;
+  private browserShutdownHandler?: () => Promise<void>;
 
   constructor(config: ExporterConfig) {
     this.config = {
@@ -136,9 +138,11 @@ export class OtlpExporter {
    */
   async shutdown(): Promise<void> {
     this.isShuttingDown = true;
+    this.removeShutdownHooks();
 
     if (this.flushTimer) {
       clearInterval(this.flushTimer);
+      this.flushTimer = undefined;
     }
 
     await this.flush();
@@ -174,24 +178,43 @@ export class OtlpExporter {
   private setupShutdownHooks(): void {
     // Node.js environment
     if (typeof process !== 'undefined' && process.on) {
-      const shutdownHandler = async () => {
+      this.processShutdownHandler = async () => {
         await this.shutdown();
       };
 
-      process.on('SIGTERM', shutdownHandler);
-      process.on('SIGINT', shutdownHandler);
+      process.on('SIGTERM', this.processShutdownHandler);
+      process.on('SIGINT', this.processShutdownHandler);
     }
 
     // Browser environment
     if (typeof globalThis !== 'undefined' && globalThis.window) {
-      const shutdownHandler = async () => {
+      this.browserShutdownHandler = async () => {
         await this.shutdown();
       };
 
       if (typeof globalThis.window.addEventListener === 'function') {
-        globalThis.window.addEventListener('beforeunload', shutdownHandler);
-        globalThis.window.addEventListener('pagehide', shutdownHandler);
+        globalThis.window.addEventListener('beforeunload', this.browserShutdownHandler);
+        globalThis.window.addEventListener('pagehide', this.browserShutdownHandler);
       }
+    }
+  }
+
+  private removeShutdownHooks(): void {
+    if (this.processShutdownHandler && typeof process !== 'undefined' && process.off) {
+      process.off('SIGTERM', this.processShutdownHandler);
+      process.off('SIGINT', this.processShutdownHandler);
+      this.processShutdownHandler = undefined;
+    }
+
+    if (
+      this.browserShutdownHandler &&
+      typeof globalThis !== 'undefined' &&
+      globalThis.window &&
+      typeof globalThis.window.removeEventListener === 'function'
+    ) {
+      globalThis.window.removeEventListener('beforeunload', this.browserShutdownHandler);
+      globalThis.window.removeEventListener('pagehide', this.browserShutdownHandler);
+      this.browserShutdownHandler = undefined;
     }
   }
 

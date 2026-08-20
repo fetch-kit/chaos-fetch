@@ -622,6 +622,23 @@ describe('telemetry', () => {
       }
     });
 
+    it('removes node signal hooks during shutdown', async () => {
+      const initialSigterm = process.listenerCount('SIGTERM');
+      const initialSigint = process.listenerCount('SIGINT');
+      const exporter = new OtlpExporter({
+        endpoint: 'http://localhost:4318',
+        serviceName: 'test',
+      });
+
+      expect(process.listenerCount('SIGTERM')).toBe(initialSigterm + 1);
+      expect(process.listenerCount('SIGINT')).toBe(initialSigint + 1);
+
+      await exporter.shutdown();
+
+      expect(process.listenerCount('SIGTERM')).toBe(initialSigterm);
+      expect(process.listenerCount('SIGINT')).toBe(initialSigint);
+    });
+
     it('registers browser lifecycle hooks and runs captured browser shutdown handler', async () => {
       const mockFetch = vi.fn(async (): Promise<Response> => {
         return new Response('', { status: 200 });
@@ -635,9 +652,10 @@ describe('telemetry', () => {
       const addEventListener = vi.fn((eventName: string, handler: () => Promise<void> | void) => {
         eventHandlers.set(eventName, handler);
       });
+      const removeEventListener = vi.fn();
 
       Object.defineProperty(globalThis, 'window', {
-        value: { addEventListener },
+        value: { addEventListener, removeEventListener },
         configurable: true,
       });
 
@@ -660,6 +678,8 @@ describe('telemetry', () => {
         }
 
         expect(mockFetch).toHaveBeenCalled();
+        expect(removeEventListener).toHaveBeenCalledWith('beforeunload', expect.any(Function));
+        expect(removeEventListener).toHaveBeenCalledWith('pagehide', expect.any(Function));
       } finally {
         globalThis.fetch = originalFetch;
 

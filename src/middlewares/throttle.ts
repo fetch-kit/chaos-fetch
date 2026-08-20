@@ -97,7 +97,10 @@ export function throttle(opts: ThrottleOptions) {
           controller.enqueue(value);
           const delay = (value.length / rate) * 1000;
           await sleep(delay);
-        }
+        },
+        cancel(reason) {
+          return reader.cancel(reason);
+        },
       });
       ctx.res = new Response(throttledStream, ctx.res);
       return;
