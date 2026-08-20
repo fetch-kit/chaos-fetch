@@ -32,4 +32,20 @@ describe('fetchUtils', () => {
     restoreGlobalFetch();
     expect(globalThis.fetch).toBe(originalFetch);
   });
+
+  it('restores the fetch owned by each replacement cycle', () => {
+    const firstOwner = vi.fn();
+    const secondOwner = vi.fn();
+    const replacement = vi.fn();
+
+    globalThis.fetch = firstOwner;
+    replaceGlobalFetch(replacement);
+    restoreGlobalFetch();
+    expect(globalThis.fetch).toBe(firstOwner);
+
+    globalThis.fetch = secondOwner;
+    replaceGlobalFetch(replacement);
+    restoreGlobalFetch();
+    expect(globalThis.fetch).toBe(secondOwner);
+  });
 });

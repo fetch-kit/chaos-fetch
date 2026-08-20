@@ -122,6 +122,25 @@ it('covers fallback for Uint8Array', async () => {
 });
 
 describe('throttle middleware', () => {
+  it('propagates browser stream cancellation to the source', async () => {
+    let cancelledWith: unknown;
+    const source = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(Uint8Array.of(0));
+      },
+      cancel(reason) {
+        cancelledWith = reason;
+      },
+    });
+    const ctx = createCtx();
+    ctx.res = new Response(source);
+
+    await throttle({ rate: 10_000 })(ctx, async () => {});
+    await ctx.res.body!.cancel('consumer stopped');
+
+    expect(cancelledWith).toBe('consumer stopped');
+  });
+
   beforeEach(() => {
     vi.useFakeTimers();
   });

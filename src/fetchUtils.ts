@@ -6,5 +6,8 @@ export function replaceGlobalFetch(clientFetch: typeof fetch) {
 }
 
 export function restoreGlobalFetch() {
-  if (originalFetch) globalThis.fetch = originalFetch;
+  if (originalFetch) {
+    globalThis.fetch = originalFetch;
+    originalFetch = undefined;
+  }
 }
