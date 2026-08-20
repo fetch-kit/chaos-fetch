@@ -4,6 +4,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/fetch-kit/chaos-fetch?style=flat-square)](https://github.com/fetch-kit/chaos-fetch/stargazers)
 [![CI](https://github.com/fetch-kit/chaos-fetch/actions/workflows/ci.yaml/badge.svg)](https://github.com/fetch-kit/chaos-fetch/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/fetch-kit/chaos-fetch/branch/main/graph/badge.svg)](https://codecov.io/gh/fetch-kit/chaos-fetch)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/fetch-kit/chaos-fetch/badge)](https://scorecard.dev/viewer/?uri=github.com/fetch-kit/chaos-fetch)
 
 # chaos-fetch
 
