@@ -74,7 +74,16 @@ restoreGlobalFetch(); // to restore original fetch
 - `global`: Ordered array of middleware nodes applied to every request
 - `routes`: Map of method+path to ordered array of middleware nodes
 - Both `global` and `routes` are optional. If omitted, no global or route-specific middleware will be applied.
-- Middleware node: `{ latency: 100 }`, `{ failRandomly: { rate: 0.1, status: 503 } }`, etc.
+- Middleware node: `{ latency: { ms: 100 } }`, `{ failRandomly: { rate: 0.1, status: 503 } }`, etc.
+
+TypeScript consumers can import the configuration types when defining reusable rulesets:
+
+```ts
+import type { ChaosConfig, MiddlewareConfig } from '@fetchkit/chaos-fetch';
+
+const globalRules: MiddlewareConfig[] = [{ latency: { ms: 100 } }];
+const config: ChaosConfig = { global: globalRules };
+```
 
 ### Routing
 
