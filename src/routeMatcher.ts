@@ -1,17 +1,21 @@
-import Router from '@koa/router';
+import { pathToRegexp } from 'path-to-regexp';
 
-interface LayerWithChaos extends Router.Layer {
-  chaosMiddlewares?: MiddlewareConfig[];
-}
 export type MiddlewareConfig = Record<string, unknown>;
 
+type CompiledRoute = {
+  methods: string[];
+  regexp: RegExp;
+  middlewares: MiddlewareConfig[];
+};
+
 export class RouteMatcher {
-  private router: Router;
+  private routes: CompiledRoute[];
 
   constructor(routes: Record<string, MiddlewareConfig[]>) {
-    this.router = new Router();
+    this.routes = [];
+
     for (const key in routes) {
-      // Parse key: "METHOD /path" or "/path"
+      // Preserve the existing route-key parsing: "METHOD /path" or "/path".
       const parts = key.split(' ');
       let method = '';
       let path = '';
@@ -21,28 +25,34 @@ export class RouteMatcher {
       } else {
         path = parts[0];
       }
-      const mws = routes[key];
-      const layer = this.router.register(path, method ? [method.toUpperCase()] : [], () => {}) as LayerWithChaos;
-      layer.chaosMiddlewares = mws;
+
+      const methods = method ? [method.toUpperCase()] : [];
+      // GET routes also match HEAD requests.
+      if (methods.includes('GET')) methods.unshift('HEAD');
+
+      this.routes.push({
+        methods,
+        regexp: pathToRegexp(path).regexp,
+        middlewares: routes[key],
+      });
     }
   }
 
   match(method: string, url: string): MiddlewareConfig[] {
     let path = '';
     try {
-      const urlObj = new URL(url);
-      path = urlObj.pathname;
+      path = new URL(url).pathname;
     } catch {
       path = url;
     }
+
     const methodUpper = method.toUpperCase();
-    // Match by method and path only
-    const matchMethod = this.router.match(path, methodUpper);
-    if (matchMethod && matchMethod.pathAndMethod.length > 0) {
-      const layer = matchMethod.pathAndMethod[0];
-      const chaosLayer = layer as LayerWithChaos;
-      if (Array.isArray(chaosLayer.chaosMiddlewares)) {
-        return chaosLayer.chaosMiddlewares;
+    for (const route of this.routes) {
+      if (
+        route.regexp.test(path) &&
+        (route.methods.length === 0 || route.methods.includes(methodUpper))
+      ) {
+        return route.middlewares;
       }
     }
 
