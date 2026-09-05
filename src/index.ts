@@ -2,22 +2,15 @@ import { registerBuiltins } from './registry/builtin';
 import { resolveMiddleware, Middleware, Context } from './registry/middleware';
 import { runMiddlewares } from './middlewareEngine';
 import { RouteMatcher } from './routeMatcher';
-import type { OtelConfig } from './telemetry/middleware';
+import type { ChaosConfig, MiddlewareConfig } from './config';
 
 export { replaceGlobalFetch, restoreGlobalFetch } from './fetchUtils';
 export { registerMiddleware } from './registry/middleware';
 export { registerBuiltins } from './registry/builtin';
 export type { Context, Middleware } from './registry/middleware';
+export type { ChaosConfig, MiddlewareConfig } from './config';
 
 const nativeFetch = typeof fetch === 'function' ? fetch : undefined;
-
-type MiddlewareConfig = Record<string, unknown>;
-
-interface ChaosConfig {
-  otel?: OtelConfig;
-  global?: MiddlewareConfig[];
-  routes?: Record<string, MiddlewareConfig[]>;
-}
 
 export function createClient(
   config: ChaosConfig,

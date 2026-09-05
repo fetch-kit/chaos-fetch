@@ -1,6 +1,5 @@
 import { pathToRegexp } from 'path-to-regexp';
-
-export type MiddlewareConfig = Record<string, unknown>;
+import type { MiddlewareConfig } from './config';
 
 type CompiledRoute = {
   methods: string[];
