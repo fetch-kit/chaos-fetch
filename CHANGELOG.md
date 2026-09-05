@@ -1,5 +1,27 @@
 # chaos-fetch
 
+## 1.3.0
+
+### Minor Changes
+
+- 4937992: Added
+
+  - origin-specific routing with absolute URL patterns while preserving origin-independent path routes
+
+### Patch Changes
+
+- 4ac8cd5: Added
+
+  - exported public `ChaosConfig` and `MiddlewareConfig` types for integrations
+
+- 088aadf: Changed
+
+  - replaced `@koa/router` with direct `path-to-regexp` route matching
+
+  Fixed
+
+  - browser and Service Worker bundles no longer require Node.js `http` and `url` modules
+
 ## 1.2.3
 
 ### Patch Changes
