@@ -20,7 +20,7 @@ A TypeScript/ESM client library for injecting network chaos (latency, failures, 
 - Built-in middleware primitives: `latency`, `latencyRange`, `fail`, `failRandomly`, `failNth`, `failFirstN`, `rateLimit`, `throttle`, `mock`
 - Extensible registry for custom middleware
 - Route matching by method and path
-- Built on Koa components (`@koa/router` and `koa-compose`), it supports both request and response interception/modification
+- Uses `path-to-regexp` for routing and `koa-compose` for middleware composition, supporting both request and response interception/modification
 - Robust short-circuiting: middleware can halt further processing
 
 ## Installation
@@ -78,15 +78,16 @@ restoreGlobalFetch(); // to restore original fetch
 
 ### Routing
 
-`chaos-fetch` uses `@koa/router` for path matching, supporting named parameters (e.g., `/users/:id`), wildcards (e.g., `*`), and regex routes.
+`chaos-fetch` uses `path-to-regexp` for path matching, supporting named parameters, named wildcards, and optional groups.
 
-- Example: `"GET /api/*"` matches any GET request under `/api/`.
+- Example: `"GET /api/*path"` matches any GET request under `/api/`.
 - Example: `"GET /users/:id"` matches GET requests like `/users/123`.
+- Example: `"GET /users{/:id}"` matches both `/users` and `/users/123`.
 
 **Supported Route Patterns:**
 - **Named parameters:** `/users/:id` — Matches any path like `/users/123`.
-- **Wildcards:** `/api/*` — Matches any path under `/api/`.
-- **Regex:** `/files/(.*)` — Matches any path under `/files/`.
+- **Named wildcards:** `/api/*path` — Matches any path under `/api/`.
+- **Optional groups:** `/users{/:id}` — Matches with or without the grouped segment.
 
 Note: route parameters are used internally for matching; they are not currently exposed on `ctx` for middleware consumption.
 
@@ -165,7 +166,7 @@ registerMiddleware('myMiddleware', (opts) => async (ctx, next) => {
 });
 ```
 
-Under the hood, `chaos-fetch` uses [Koa](https://koajs.com/) components (`@koa/router` and `koa-compose`), so your custom middleware can leverage the full Koa middleware pattern. Middleware functions are async and take `(ctx, next)` parameters. Read more in the [Koa docs](https://koajs.com/#middleware).
+Under the hood, `chaos-fetch` uses `koa-compose`, so custom middleware follows the Koa onion-style middleware pattern. Middleware functions are async and take `(ctx, next)` parameters. Read more in the [Koa docs](https://koajs.com/#middleware).
 
 ## Comparison with MSW
 

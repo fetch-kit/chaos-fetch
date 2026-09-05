@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { RouteMatcher } from '../src/routeMatcher';
 
 describe('RouteMatcher', () => {
@@ -54,6 +54,27 @@ describe('RouteMatcher', () => {
     });
     expect(matcher.match('GET', '/regex/42')).toEqual([{ mwRegex: {} }]);
     expect(matcher.match('GET', '/regex/123')).toEqual([{ mwRegex: {} }]);
+  });
+
+  it('matches HEAD requests with GET routes', () => {
+    const matcher = new RouteMatcher({
+      'GET /resource/:id': [{ mwHead: {} }],
+    });
+    expect(matcher.match('HEAD', '/resource/123')).toEqual([{ mwHead: {} }]);
+  });
+
+  it('matches path-to-regexp wildcards across segments', () => {
+    const matcher = new RouteMatcher({
+      '/files/*path': [{ mwWildcard: {} }],
+    });
+    expect(matcher.match('GET', '/files/a/b/c')).toEqual([{ mwWildcard: {} }]);
+  });
+
+  it('allows a trailing slash and matches paths case-insensitively', () => {
+    const matcher = new RouteMatcher({
+      '/users/:id': [{ mwNormalized: {} }],
+    });
+    expect(matcher.match('GET', '/USERS/123/')).toEqual([{ mwNormalized: {} }]);
   });
 
   it('returns the first registered route when multiple routes match', () => {
