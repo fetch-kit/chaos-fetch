@@ -87,11 +87,12 @@ const config: ChaosConfig = { global: globalRules };
 
 ### Routing
 
-`chaos-fetch` uses `path-to-regexp` for path matching, supporting named parameters, named wildcards, and optional groups.
+`chaos-fetch` uses `path-to-regexp` for pathname matching, supporting named parameters, named wildcards, and optional groups. Path-only patterns apply on every origin; absolute URL patterns constrain a route to one exact origin.
 
 - Example: `"GET /api/*path"` matches any GET request under `/api/`.
 - Example: `"GET /users/:id"` matches GET requests like `/users/123`.
-- Example: `"GET /users{/:id}"` matches both `/users` and `/users/123`.
+- Example: `"GET /users{/:id}"` matches both `/users` and `/users/123` on any origin.
+- Example: `"GET https://api.example.com/users/:id"` matches only that HTTPS origin.
 
 **Supported Route Patterns:**
 - **Named parameters:** `/users/:id` — Matches any path like `/users/123`.
@@ -101,7 +102,10 @@ const config: ChaosConfig = { global: globalRules };
 Note: route parameters are used internally for matching; they are not currently exposed on `ctx` for middleware consumption.
 
 **Rule inheritance:**
-- Domains are not considered in route matching, only the method and path. This simplification is a tradeoff: it reduces configuration complexity but means you cannot target rules to specific domains. If you need domain-specific behavior, consider using separate clients or custom middleware.
+- Path-only routes such as `GET /users/:id` remain origin-independent and match the pathname on every origin.
+- Absolute routes such as `GET https://api.example.com/users/:id` match the exact normalized origin, including protocol and non-default port.
+- Query strings and fragments are ignored for both path-only and absolute routes.
+- Hostname wildcards are not supported; use an exact origin or a path-only route.
 - There is no inheritance between global and route-specific middleware.
 - Global middlewares apply to every request.
 - Route middlewares only apply to requests matching that route.

@@ -44,6 +44,33 @@ describe('routing and composition fuzzing', () => {
     );
   });
 
+  it('matches absolute routes only on the configured origin', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+        fc.constantFrom(
+          ['https://api.example.test', 'https://other.example.test'],
+          ['http://api.example.test', 'https://api.example.test'],
+          ['https://api.example.test:8443', 'https://api.example.test'],
+        ),
+        segmentArbitrary,
+        fc.webQueryParameters(),
+        (method, [configuredOrigin, otherOrigin], id, query) => {
+          const middlewares = [{ selected: { id } }];
+          const matcher = new RouteMatcher({
+            [`${method} ${configuredOrigin}/resource/:id`]: middlewares,
+          });
+          const suffix = query ? `?${query}` : '';
+
+          expect(
+            matcher.match(method.toLowerCase(), `${configuredOrigin}/resource/${id}${suffix}`),
+          ).toBe(middlewares);
+          expect(matcher.match(method, `${otherOrigin}/resource/${id}${suffix}`)).toEqual([]);
+        },
+      ),
+      { numRuns: 1_000 },
+    );
+  });
   it('does not leak method-specific routes across generated methods', () => {
     fc.assert(
       fc.property(
