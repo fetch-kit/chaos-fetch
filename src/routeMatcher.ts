@@ -45,7 +45,7 @@ export class RouteMatcher {
       // Route keys use either "METHOD pattern" or just "pattern".
       const parts = key.split(' ');
       let method = '';
-      let pattern = '';
+      let pattern: string;
       if (parts.length === 2) {
         method = parts[0];
         pattern = parts[1];
